@@ -3,5 +3,6 @@ __pycache__/
 .pytest_cache/
 .ipynb_checkpoints/
 .vscode/
+.tools/
 .DS_Store
 Thumbs.db
