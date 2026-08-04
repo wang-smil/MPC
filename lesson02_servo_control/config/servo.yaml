@@ -1,0 +1,28 @@
+simulation:
+  dt: 0.001
+  duration: 4.0
+  seed: 42
+
+plant:
+  inertia: 0.020
+  damping: 0.080
+  coulomb_friction: 0.120
+  friction_smoothing: 0.020
+
+controller:
+  kp: 18.0
+  kd: 1.2
+  target_deg: 30.0
+
+actuator:
+
+  torque_limit: 3
+  delay_steps: 1
+
+sensor:
+  position_noise_std_deg: 0.05
+  velocity_filter_alpha: 0.90
+
+safety:
+  position_limit_deg: 60.0
+  velocity_limit_deg_s: 300.0

@@ -1,0 +1,179 @@
+{
+  "surface": "report",
+  "manifest": {
+    "version": 1,
+    "surface": "report",
+    "title": "单轴关节转矩限幅实验：3.0 N·m 对比 0.8 N·m",
+    "description": "比较转矩上限变化对跟踪、安全、饱和和控制负担的影响。",
+    "generatedAt": "2026-08-04T15:42:17+08:00",
+    "filters": [],
+    "cards": [],
+    "charts": [
+      {
+        "id": "saturation_chart",
+        "title": "各工况转矩饱和时间占比",
+        "subtitle": "同一4秒仿真窗口；数值为发生限幅的采样点比例",
+        "type": "bar",
+        "dataset": "comparison",
+        "sourceId": "servo_experiment",
+        "valueFormat": "number",
+        "unit": "%",
+        "encodings": {
+          "x": {"field": "scenario", "type": "nominal", "label": "工况"},
+          "y": {"field": "saturation_pct", "type": "quantitative", "label": "饱和占比", "unit": "%"},
+          "color": {"field": "torque_limit_label", "type": "nominal", "label": "转矩上限"},
+          "tooltip": [
+            {"field": "max_torque_nm", "type": "quantitative", "label": "最大实际转矩", "unit": "N·m"},
+            {"field": "safety_fault_count", "type": "quantitative", "label": "安全触发采样点"}
+          ]
+        }
+      },
+      {
+        "id": "rms_chart",
+        "title": "各工况实际转矩RMS",
+        "subtitle": "RMS反映4秒窗口内的综合控制用力程度",
+        "type": "bar",
+        "dataset": "comparison",
+        "sourceId": "servo_experiment",
+        "valueFormat": "number",
+        "unit": "N·m",
+        "encodings": {
+          "x": {"field": "scenario", "type": "nominal", "label": "工况"},
+          "y": {"field": "rms_torque_nm", "type": "quantitative", "label": "RMS转矩", "unit": "N·m"},
+          "color": {"field": "torque_limit_label", "type": "nominal", "label": "转矩上限"},
+          "tooltip": [
+            {"field": "settling_time_s", "type": "quantitative", "label": "调节时间", "unit": "s"},
+            {"field": "final_error_deg", "type": "quantitative", "label": "最终误差", "unit": "deg"}
+          ]
+        }
+      }
+    ],
+    "tables": [
+      {
+        "id": "metrics_table",
+        "title": "六组实验指标明细",
+        "subtitle": "相同模型、控制器、噪声种子和4秒窗口，仅改变转矩上限",
+        "dataset": "comparison",
+        "sourceId": "servo_experiment",
+        "density": "spacious",
+        "defaultSort": {"field": "scenario_order", "direction": "asc"},
+        "columns": [
+          {"field": "scenario_order", "label": "顺序", "type": "number"},
+          {"field": "scenario", "label": "工况", "type": "text"},
+          {"field": "torque_limit_label", "label": "转矩上限", "type": "text"},
+          {"field": "final_error_deg", "label": "最终误差", "format": "number", "unit": "deg"},
+          {"field": "overshoot_pct", "label": "超调", "format": "number", "unit": "%"},
+          {"field": "settling_time_s", "label": "调节时间", "format": "number", "unit": "s"},
+          {"field": "rms_torque_nm", "label": "RMS转矩", "format": "number", "unit": "N·m"},
+          {"field": "saturation_pct", "label": "饱和占比", "format": "number", "unit": "%"},
+          {"field": "safety_fault_count", "label": "安全触发采样点", "type": "number"}
+        ]
+      }
+    ],
+    "sources": [
+      {
+        "id": "servo_experiment",
+        "label": "第二课单轴伺服仿真",
+        "path": "lesson02_servo_control/src/run_servo_test.py"
+      }
+    ],
+    "blocks": [
+      {
+        "id": "title",
+        "type": "markdown",
+        "body": "# 单轴关节转矩限幅实验：3.0 N·m 对比 0.8 N·m"
+      },
+      {
+        "id": "technical_summary",
+        "type": "markdown",
+        "sourceId": "servo_experiment",
+        "body": "## 技术摘要\n\n将转矩上限从 **3.0 N·m** 降至 **0.8 N·m**，主要收益是抑制峰值速度和控制冲击：正常、扰动工况的安全触发采样点都从 **27降至0**，传感器故障从 **33降至4**。代价是执行器更频繁地受限，饱和占比在正常、扰动、传感器故障工况分别升至 **3.52%、10.27%、41.09%**。较低限幅不是“全面更好”，而是用更慢、更受硬件约束的响应换取更低峰值和更高安全裕度。"
+      },
+      {
+        "id": "saturation_finding",
+        "type": "markdown",
+        "sourceId": "servo_experiment",
+        "body": "## 更低的峰值换来了更长的饱和时间\n\n最大实际转矩按预期从 **3.0 N·m** 限制到 **0.8 N·m**。但是控制器增益没有改变，PD仍会提出较大的转矩命令，所以更多采样点被夹在限幅边界。传感器故障最明显：噪声差分使速度估计剧烈波动，限幅器有 **41.09%** 的时间在工作。"
+      },
+      {"id": "saturation_visual", "type": "chart", "chartId": "saturation_chart"},
+      {
+        "id": "effort_finding",
+        "type": "markdown",
+        "sourceId": "servo_experiment",
+        "body": "## RMS转矩下降，但持续扰动能力也被压缩\n\n较低限幅使RMS转矩下降：正常工况约降 **46.9%**，扰动工况约降 **25.5%**，传感器故障约降 **62.3%**。这意味着峰值电流、发热和机械冲击风险可能降低；同时也意味着遇到更大或持续更久的外部负载时，执行器可用于恢复位置的余量更少。"
+      },
+      {"id": "effort_visual", "type": "chart", "chartId": "rms_chart"},
+      {
+        "id": "exact_results",
+        "type": "markdown",
+        "body": "## 精确结果支持逐项核对\n\n下表保留两次配置下的全部核心指标。正常工况调节时间由 **0.338 s** 增至 **0.408 s**；扰动工况基本不变，是因为0.8 N·m的执行器上限刚好等于注入负载，负载撤除后仍能恢复。"
+      },
+      {"id": "results_table", "type": "table", "tableId": "metrics_table"},
+      {
+        "id": "definitions",
+        "type": "markdown",
+        "body": "## 范围与指标定义\n\n比较对象为同一单轴关节模型、同一PD增益、同一随机种子和 **4 s** 仿真窗口，仅将 `torque_limit` 从3.0改为0.8 N·m。`saturation_pct` 是未限幅命令与限幅后命令不同的采样点比例；`safety_fault_count` 是1 ms采样点计数，不是独立事故次数；`settling_time_s` 是真实位置此后始终位于目标±0.6°内的最早时刻。"
+      },
+      {
+        "id": "methodology",
+        "type": "markdown",
+        "body": "## 方法\n\n每种配置依次运行normal、disturbance和sensor_fault三种确定性工况。仿真以1 ms为周期，使用相同随机种子42；位置使用真实状态评估，速度由带噪编码器差分并低通滤波后反馈，转矩经过饱和、一步延迟和安全检查，再通过半隐式欧拉法更新关节状态。"
+      },
+      {
+        "id": "limitations",
+        "type": "markdown",
+        "body": "## 限制与稳健性说明\n\n传感器故障下的调节时间从3.933 s变为0.408 s，不应解释为传感器恢复正常。0.8 N·m限幅把噪声引起的实际转矩压小，使真实位置一直留在±0.6°容差内；但估计速度和命令仍然抖动，饱和占比反而达到41.09%。当前指标还没有直接统计命令抖动频率、扰动期间最大位置偏差、恢复时间或连续安全事件数。结论只适用于当前4秒仿真、固定模型参数和单个随机种子。"
+      },
+      {
+        "id": "next_steps",
+        "type": "markdown",
+        "body": "## 下一步实验\n\n1. 保持0.8 N·m限幅，比较 `kp=8`、`18`、`35`，观察是否只是让命令更饱和。\n2. 增加最大扰动偏差、扰动恢复时间和转矩命令总变差等指标。\n3. 为目标角度加入斜坡或梯形轨迹，比较其是否能在3.0 N·m配置下消除初始超速，而不牺牲稳态扰动能力。"
+      },
+      {
+        "id": "questions",
+        "type": "markdown",
+        "body": "## 仍需回答的问题\n\n- 0.8 N·m是否足以应对大于0.8 N·m或持续不撤除的负载？\n- 当前 `alpha=0.90` 的速度滤波在响应延迟和噪声抑制之间是否最合适？\n- 使用轨迹规划后，能否保留3.0 N·m的扰动恢复能力，同时避免正常工况超速？"
+      }
+    ]
+  },
+  "snapshot": {
+    "version": 1,
+    "generatedAt": "2026-08-04T15:42:17+08:00",
+    "status": "ready",
+    "datasets": {
+      "comparison": [
+        {"scenario_order": 1, "scenario": "normal", "torque_limit_label": "3.0 Nm", "torque_limit_nm": 3.0, "final_error_deg": 0.00365885, "overshoot_pct": 0.0279124, "settling_time_s": 0.338, "max_torque_nm": 3.0, "rms_torque_nm": 0.38323083, "saturation_pct": 0.97475631, "safety_fault_count": 27},
+        {"scenario_order": 1, "scenario": "normal", "torque_limit_label": "0.8 Nm", "torque_limit_nm": 0.8, "final_error_deg": 0.00365499, "overshoot_pct": 0.0240483, "settling_time_s": 0.408, "max_torque_nm": 0.8, "rms_torque_nm": 0.20337586, "saturation_pct": 3.52411897, "safety_fault_count": 0},
+        {"scenario_order": 2, "scenario": "disturbance", "torque_limit_label": "3.0 Nm", "torque_limit_nm": 3.0, "final_error_deg": 0.00106618, "overshoot_pct": 0.00291887, "settling_time_s": 2.354, "max_torque_nm": 3.0, "rms_torque_nm": 0.49216374, "saturation_pct": 0.97475631, "safety_fault_count": 27},
+        {"scenario_order": 2, "scenario": "disturbance", "torque_limit_label": "0.8 Nm", "torque_limit_nm": 0.8, "final_error_deg": 0.00111001, "overshoot_pct": 0.00272438, "settling_time_s": 2.357, "max_torque_nm": 0.8, "rms_torque_nm": 0.36660956, "saturation_pct": 10.27243189, "safety_fault_count": 0},
+        {"scenario_order": 3, "scenario": "sensor_fault", "torque_limit_label": "3.0 Nm", "torque_limit_nm": 3.0, "final_error_deg": 0.34628354, "overshoot_pct": 2.2885981, "settling_time_s": 3.933, "max_torque_nm": 3.0, "rms_torque_nm": 1.4504869, "saturation_pct": 12.24693827, "safety_fault_count": 33},
+        {"scenario_order": 3, "scenario": "sensor_fault", "torque_limit_label": "0.8 Nm", "torque_limit_nm": 0.8, "final_error_deg": 0.39312386, "overshoot_pct": 1.31041286, "settling_time_s": 0.408, "max_torque_nm": 0.8, "rms_torque_nm": 0.54711015, "saturation_pct": 41.08972757, "safety_fault_count": 4}
+      ]
+    },
+    "accessIssues": []
+  },
+  "sources": [
+    {
+      "id": "servo_experiment",
+      "label": "第二课单轴伺服仿真",
+      "path": "lesson02_servo_control/src/run_servo_test.py",
+      "query": {
+        "engine": "sqlite",
+        "language": "sql",
+        "sql": "SELECT 1 AS scenario_order, 'normal' AS scenario, '3.0 Nm' AS torque_limit_label, 3.0 AS torque_limit_nm, 0.00365885 AS final_error_deg, 0.0279124 AS overshoot_pct, 0.338 AS settling_time_s, 3.0 AS max_torque_nm, 0.38323083 AS rms_torque_nm, 0.97475631 AS saturation_pct, 27 AS safety_fault_count\nUNION ALL SELECT 1, 'normal', '0.8 Nm', 0.8, 0.00365499, 0.0240483, 0.408, 0.8, 0.20337586, 3.52411897, 0\nUNION ALL SELECT 2, 'disturbance', '3.0 Nm', 3.0, 0.00106618, 0.00291887, 2.354, 3.0, 0.49216374, 0.97475631, 27\nUNION ALL SELECT 2, 'disturbance', '0.8 Nm', 0.8, 0.00111001, 0.00272438, 2.357, 0.8, 0.36660956, 10.27243189, 0\nUNION ALL SELECT 3, 'sensor_fault', '3.0 Nm', 3.0, 0.34628354, 2.2885981, 3.933, 3.0, 1.4504869, 12.24693827, 33\nUNION ALL SELECT 3, 'sensor_fault', '0.8 Nm', 0.8, 0.39312386, 1.31041286, 0.408, 0.8, 0.54711015, 41.08972757, 4",
+        "description": "将两次Python仿真的已审核指标整形成六行报告数据。原始计算逻辑位于run_servo_test.py。",
+        "executed_at": "2026-08-04T15:42:17+08:00",
+        "tables_used": [],
+        "filters": ["duration=4.0 s", "dt=0.001 s", "seed=42", "scenario in normal, disturbance, sensor_fault"],
+        "metric_definitions": [
+          "final_error_deg=abs(target-position[-1]) converted to degrees",
+          "overshoot_pct=max(0,(max(position)-target)/abs(target)*100)",
+          "settling_time_s=earliest time after which absolute error always remains within max(0.5 deg,2% of target)",
+          "rms_torque_nm=sqrt(mean(torque_applied^2))",
+          "saturation_pct=mean(torque_command differs from clipped command)*100",
+          "safety_fault_count=sum of 1 ms samples where measured position or estimated velocity exceeds configured limit"
+        ]
+      }
+    }
+  ]
+}
