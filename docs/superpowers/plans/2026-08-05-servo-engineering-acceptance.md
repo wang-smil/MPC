@@ -244,7 +244,7 @@ Implement the following behavior:
 1. With zero jitter, preserve the current exact endpoint and sample count.
 2. With jitter, sample and clip each period, append cumulative time, and stop after the cumulative time reaches or exceeds `duration`.
 3. Store the applied period at the current sample and repeat the final applied period at the array tail.
-4. Use `actual_dt[k]` for encoder velocity difference and semi-implicit Euler integration.
+4. Use `actual_dt[k - 1]` for the measured-position difference at sample `k`, and use `actual_dt[k]` for semi-implicit Euler integration from sample `k` to `k + 1`.
 5. Use the generated cumulative `time` array for scenario timing.
 6. Include `actual_dt` in returned data and CSV keys.
 

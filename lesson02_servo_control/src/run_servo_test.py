@@ -34,6 +34,55 @@ def cubic_reference(
     return float(position), float(velocity)
 
 
+def build_time_axis(
+    nominal_dt: float,
+    duration: float,
+    rng: np.random.Generator,
+    jitter_std_ratio: float,
+) -> tuple[np.ndarray, np.ndarray]:
+    """生成仿真时间轴及每次状态更新实际使用的周期。"""
+
+    if nominal_dt <= 0.0:
+        raise ValueError("nominal_dt must be positive")
+    if duration <= 0.0:
+        raise ValueError("duration must be positive")
+    if jitter_std_ratio < 0.0:
+        raise ValueError("jitter_std_ratio cannot be negative")
+
+    if jitter_std_ratio == 0.0:
+        step_count = int(round(duration / nominal_dt))
+        time = np.arange(step_count + 1, dtype=float) * nominal_dt
+        actual_dt = np.full(len(time), nominal_dt, dtype=float)
+        return time, actual_dt
+
+    time_values = [0.0]
+    applied_periods = []
+
+    while time_values[-1] < duration:
+        actual_dt = nominal_dt + rng.normal(
+            loc=0.0,
+            scale=jitter_std_ratio * nominal_dt,
+        )
+        actual_dt = float(
+            np.clip(
+                actual_dt,
+                0.8 * nominal_dt,
+                1.2 * nominal_dt,
+            )
+        )
+
+        applied_periods.append(actual_dt)
+        time_values.append(time_values[-1] + actual_dt)
+
+    time = np.asarray(time_values, dtype=float)
+    actual_dt_log = np.asarray(
+        applied_periods + [applied_periods[-1]],
+        dtype=float,
+    )
+
+    return time, actual_dt_log
+
+
 def load_config() -> dict:
     """读取单轴伺服系统的 YAML 参数。"""
 
@@ -110,9 +159,12 @@ def simulate(config: dict, scenario: str) -> dict:
     sensor = config["sensor"]
     safety = config["safety"]
 
-    dt = float(sim["dt"])
+    nominal_dt = float(sim["dt"])
     duration = float(sim["duration"])
-    rng = np.random.default_rng(int(sim["seed"]))
+    seed = int(sim["seed"])
+    jitter_std_ratio = float(sim.get("jitter_std_ratio", 0.0))
+    rng = np.random.default_rng(seed)
+    timing_rng = np.random.default_rng(seed + 1)
 
     inertia = float(plant["inertia"])
     damping = float(plant["damping"])
@@ -144,8 +196,12 @@ def simulate(config: dict, scenario: str) -> dict:
     position_limit = np.deg2rad(float(safety["position_limit_deg"]))
     velocity_limit = np.deg2rad(float(safety["velocity_limit_deg_s"]))
 
-    step_count = int(round(duration / dt))
-    time = np.arange(step_count + 1, dtype=float) * dt
+    time, actual_dt = build_time_axis(
+        nominal_dt=nominal_dt,
+        duration=duration,
+        rng=timing_rng,
+        jitter_std_ratio=jitter_std_ratio,
+    )
     count = len(time)
 
     q = np.zeros(count)
@@ -199,7 +255,7 @@ def simulate(config: dict, scenario: str) -> dict:
         if k > 0:
             raw_velocity = (
                 q_measured[k] - q_measured[k - 1]
-            ) / dt
+            ) / actual_dt[k - 1]
 
             # 一阶低通滤波，削弱差分放大的高频噪声
             dq_estimated[k] = (
@@ -256,8 +312,8 @@ def simulate(config: dict, scenario: str) -> dict:
         ) / inertia
 
         # 半隐式欧拉积分：先更新速度，再用新速度更新位置
-        dq[k + 1] = dq[k] + ddq * dt
-        q[k + 1] = q[k] + dq[k + 1] * dt
+        dq[k + 1] = dq[k] + ddq * actual_dt[k]
+        q[k + 1] = q[k] + dq[k + 1] * actual_dt[k]
     # 循环只计算到倒数第二个采样点，
     # 因此把最后一个可用值复制到数组末尾
     q_measured[-1] = q[-1]
@@ -281,6 +337,7 @@ def simulate(config: dict, scenario: str) -> dict:
 
     data = {
         "time": time,
+        "actual_dt": actual_dt,
         "position": q,
         "velocity": dq,
         "position_measured": q_measured,
@@ -306,6 +363,7 @@ def save_log(data: dict, scenario: str) -> Path:
 
     keys = [
         "time",
+        "actual_dt",
         "position",
         "velocity",
         "position_measured",

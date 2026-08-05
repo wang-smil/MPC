@@ -20,6 +20,7 @@ class SimulationTimeAxisTest(unittest.TestCase):
 
         self.assertEqual(len(data["time"]), expected_count)
         self.assertAlmostEqual(data["time"][-1], duration)
+        self.assertEqual(len(data["actual_dt"]), expected_count)
 
 
 if __name__ == "__main__":
