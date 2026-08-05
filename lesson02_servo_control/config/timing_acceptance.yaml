@@ -1,0 +1,33 @@
+experiments:
+  acceptance_normal:
+    dt: 0.001
+    delay_steps: 0
+    jitter_std_ratio: 0.0
+
+  delay_1step:
+    dt: 0.001
+    delay_steps: 1
+    jitter_std_ratio: 0.0
+
+  delay_5steps:
+    dt: 0.001
+    delay_steps: 5
+    jitter_std_ratio: 0.0
+
+  sample_5ms:
+    dt: 0.005
+    delay_steps: 1
+    jitter_std_ratio: 0.0
+
+  jitter:
+    dt: 0.001
+    delay_steps: 0
+    jitter_std_ratio: 0.05
+
+normal_limits:
+  safety_fault_count: 0
+  final_error_deg: 0.5
+  overshoot_percent: 5.0
+  max_velocity_deg_s: 300.0
+  saturation_ratio_percent: 10.0
+  settling_time_s: 1.5
