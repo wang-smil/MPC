@@ -10,6 +10,30 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def cubic_reference(
+    time_s: float,
+    start_rad: float,
+    target_rad: float,
+    duration_s: float,
+) -> tuple[float, float]:
+    """生成端点速度为零的三次多项式位置与速度参考。"""
+
+    if duration_s <= 0.0:
+        raise ValueError("duration_s must be positive")
+
+    s = float(np.clip(time_s / duration_s, 0.0, 1.0))
+    position_delta = target_rad - start_rad
+
+    position = start_rad + position_delta * (
+        3.0 * s**2 - 2.0 * s**3
+    )
+    velocity = position_delta / duration_s * (
+        6.0 * s - 6.0 * s**2
+    )
+
+    return float(position), float(velocity)
+
+
 def load_config() -> dict:
     """读取单轴伺服系统的 YAML 参数。"""
 
