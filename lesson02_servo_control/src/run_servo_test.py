@@ -105,6 +105,7 @@ def simulate(config: dict, scenario: str) -> dict:
     sim = config["simulation"]
     plant = config["plant"]
     controller = config["controller"]
+    reference = config["reference"]
     actuator = config["actuator"]
     sensor = config["sensor"]
     safety = config["safety"]
@@ -120,7 +121,19 @@ def simulate(config: dict, scenario: str) -> dict:
 
     kp = float(controller["kp"])
     kd = float(controller["kd"])
-    target = np.deg2rad(float(controller["target_deg"]))
+
+    reference_type = str(reference["type"]).lower()
+
+    if reference_type not in {"cubic", "step"}:
+        raise ValueError(
+            "reference.type must be 'cubic' or 'step'"
+        )
+
+    target = np.deg2rad(float(reference["target_deg"]))
+    move_duration = float(reference["move_duration_s"])
+
+    if move_duration <= 0.0:
+        raise ValueError("reference.move_duration_s must be positive")
 
     torque_limit = float(actuator["torque_limit"])
     delay_steps = max(0, int(actuator["delay_steps"]))
@@ -144,6 +157,8 @@ def simulate(config: dict, scenario: str) -> dict:
     load_torque = np.zeros(count)
     saturated = np.zeros(count, dtype=bool)
     safety_fault = np.zeros(count, dtype=bool)
+    target_position = np.zeros(count)
+    target_velocity = np.zeros(count)
 
     command_delay = deque(
         [0.0] * (delay_steps + 1),
@@ -151,6 +166,20 @@ def simulate(config: dict, scenario: str) -> dict:
     )
     for k in range(count - 1):
         current_noise_std = noise_std
+
+        if reference_type == "cubic":
+            q_ref, dq_ref = cubic_reference(
+                time_s=time[k],
+                start_rad=0.0,
+                target_rad=target,
+                duration_s=move_duration,
+            )
+        else:
+            q_ref = target
+            dq_ref = 0.0
+
+        target_position[k] = q_ref
+        target_velocity[k] = dq_ref
 
         # 扰动工况：1.5～2.2秒施加0.8 N·m外部负载
         if scenario == "disturbance" and 1.5 <= time[k] <= 2.2:
@@ -178,12 +207,13 @@ def simulate(config: dict, scenario: str) -> dict:
                 + (1.0 - alpha) * raw_velocity
             )
 
-        # PD位置控制器
-        position_error = target - q_measured[k]
+        # PD位置与速度跟踪控制器
+        position_error = q_ref - q_measured[k]
+        velocity_error = dq_ref - dq_estimated[k]
 
         torque_command[k] = (
             kp * position_error
-            - kd * dq_estimated[k]
+            + kd * velocity_error
         )
         # 执行器转矩限幅
         torque_limited = np.clip(
@@ -238,6 +268,17 @@ def simulate(config: dict, scenario: str) -> dict:
     saturated[-1] = saturated[-2]
     safety_fault[-1] = safety_fault[-2]
 
+    if reference_type == "cubic":
+        target_position[-1], target_velocity[-1] = cubic_reference(
+            time_s=time[-1],
+            start_rad=0.0,
+            target_rad=target,
+            duration_s=move_duration,
+        )
+    else:
+        target_position[-1] = target
+        target_velocity[-1] = 0.0
+
     data = {
         "time": time,
         "position": q,
@@ -249,7 +290,8 @@ def simulate(config: dict, scenario: str) -> dict:
         "load_torque": load_torque,
         "saturated": saturated,
         "safety_fault": safety_fault,
-        "target": np.full(count, target),
+        "target": target_position,
+        "target_velocity": target_velocity,
     }
 
     return data
@@ -274,6 +316,7 @@ def save_log(data: dict, scenario: str) -> Path:
         "saturated",
         "safety_fault",
         "target",
+        "target_velocity",
     ]
 
     with log_path.open("w", newline="", encoding="utf-8") as file:
@@ -320,6 +363,11 @@ def plot_result(data: dict, scenario: str) -> Path:
     axes[0].grid(True)
     axes[0].legend()
 
+    axes[1].plot(
+        time,
+        np.rad2deg(data["target_velocity"]),
+        label="Target velocity",
+    )
     axes[1].plot(
         time,
         np.rad2deg(data["velocity"]),
@@ -381,7 +429,7 @@ def main() -> None:
         metrics = calculate_metrics(
             time=data["time"],
             position=data["position"],
-            target=data["target"][0],
+            target=data["target"][-1],
             torque=data["torque_applied"],
             saturated=data["saturated"],
         )

@@ -12,7 +12,11 @@ plant:
 controller:
   kp: 18.0
   kd: 1.2
+
+reference:
+  type: cubic
   target_deg: 30.0
+  move_duration_s: 0.8
 
 actuator:
 

@@ -21,6 +21,7 @@ class PlotResultTest(unittest.TestCase):
         data = {
             "time": np.array([0.0, 0.1]),
             "target": np.deg2rad(np.array([30.0, 30.0])),
+            "target_velocity": np.deg2rad(np.array([0.0, 0.0])),
             "position": np.deg2rad(np.array([0.0, 10.0])),
             "velocity": np.deg2rad(np.array([0.0, 100.0])),
             "position_measured": np.deg2rad(np.array([0.0, 10.1])),
