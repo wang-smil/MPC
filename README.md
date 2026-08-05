@@ -21,6 +21,22 @@ python -m pip install -r .\lesson02_servo_control\requirements.txt
 python .\lesson02_servo_control\src\run_servo_test.py
 ```
 
+## 工程时序验收
+
+运行三次轨迹、采样周期、命令延迟和轻度抖动对比：
+
+```powershell
+python .\lesson02_servo_control\src\run_timing_acceptance.py
+```
+
+验收结果写入：
+
+- `lesson02_servo_control/reports/engineering_acceptance.md`
+- `lesson02_servo_control/figures/step_vs_cubic.png`
+- `lesson02_servo_control/figures/timing_comparison.png`
+
+本项目目前完成离线数值仿真验证，不代表 Python 或普通 Windows 已满足硬实时控制要求。
+
 ## 自动测试
 
 ```powershell
