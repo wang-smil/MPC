@@ -148,6 +148,45 @@ def calculate_metrics(
     }
 
 
+def timing_metrics(dt_log: np.ndarray) -> dict[str, float]:
+    """计算实际控制周期的均值、最大值与标准差。"""
+
+    periods = np.asarray(dt_log, dtype=float)
+
+    if periods.ndim != 1 or periods.size == 0:
+        raise ValueError("dt_log must be a nonempty one-dimensional array")
+
+    return {
+        "mean_dt_ms": float(np.mean(periods) * 1000.0),
+        "max_dt_ms": float(np.max(periods) * 1000.0),
+        "jitter_std_ms": float(np.std(periods) * 1000.0),
+    }
+
+
+def engineering_metrics(data: dict) -> dict[str, float]:
+    """计算真实最大速度和随时间变化参考下的最大跟踪误差。"""
+
+    velocity = np.asarray(data["velocity"], dtype=float)
+    target = np.asarray(data["target"], dtype=float)
+    position = np.asarray(data["position"], dtype=float)
+
+    if velocity.ndim != 1 or velocity.size == 0:
+        raise ValueError("velocity must be a nonempty one-dimensional array")
+    if target.ndim != 1 or position.ndim != 1:
+        raise ValueError("target and position must be one-dimensional")
+    if target.size == 0 or target.shape != position.shape:
+        raise ValueError("target and position must have matching shapes")
+
+    return {
+        "max_velocity_deg_s": float(
+            np.max(np.abs(np.rad2deg(velocity)))
+        ),
+        "max_position_error_deg": float(
+            np.max(np.abs(np.rad2deg(target - position)))
+        ),
+    }
+
+
 def simulate(config: dict, scenario: str) -> dict:
     """运行一种工况下的单关节闭环仿真。"""
 
