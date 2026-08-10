@@ -1,6 +1,8 @@
 from pathlib import Path
 import sys
+import tempfile
 import unittest
+from unittest.mock import patch
 
 import numpy as np
 
@@ -74,6 +76,50 @@ class ZohDiscretizationTest(unittest.TestCase):
             with self.subTest(sample_time_s=sample_time_s):
                 with self.assertRaises(ValueError):
                     self.discretize_zoh(sample_time_s)
+
+
+class OutputArtifactTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self.format_results = getattr(
+            discretize_demo,
+            "format_results",
+            None,
+        )
+        self.write_output = getattr(
+            discretize_demo,
+            "write_output",
+            None,
+        )
+
+        self.assertIsNotNone(
+            self.format_results,
+            "format_results() 尚未实现",
+        )
+        self.assertIsNotNone(
+            self.write_output,
+            "write_output() 尚未实现",
+        )
+
+    def test_formats_both_sample_times_and_matrices(self) -> None:
+        output_text = self.format_results((0.001, 0.01))
+
+        self.assertIn("Ts = 0.001 s", output_text)
+        self.assertIn("Ts = 0.01 s", output_text)
+        self.assertIn("Ad =", output_text)
+        self.assertIn("Bd =", output_text)
+
+    def test_writes_exact_output_text(self) -> None:
+        output_text = "ZOH matrix output\n"
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with patch.object(discretize_demo, "ROOT", Path(temp_dir)):
+                output_path = self.write_output(output_text)
+
+            self.assertTrue(output_path.is_file())
+            self.assertEqual(
+                output_path.read_text(encoding="utf-8"),
+                output_text,
+            )
 
 
 if __name__ == "__main__":

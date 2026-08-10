@@ -6,6 +6,7 @@
 
 - `lesson01_state_space/`：质量—弹簧—阻尼系统与状态空间模型。
 - `lesson02_servo_control/`：单轴机器人关节、PD闭环、约束、扰动、传感器噪声、日志与性能指标。
+- `lesson03_discretization/`：连续状态空间模型的 ZOH 离散化与采样周期比较。
 
 ## 环境
 
@@ -36,6 +37,14 @@ python .\lesson02_servo_control\src\run_timing_acceptance.py
 - `lesson02_servo_control/figures/timing_comparison.png`
 
 本项目目前完成离线数值仿真验证，不代表 Python 或普通 Windows 已满足硬实时控制要求。
+
+## 运行第三课实验 1
+
+```powershell
+python .\lesson03_discretization\src\discretize_demo.py
+```
+
+该实验将第一课连续模型在 1 ms、10 ms 下以 ZOH 离散化，并保存 `Ad_Bd_output.txt`。
 
 ## 自动测试
 

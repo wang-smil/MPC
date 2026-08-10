@@ -1,5 +1,10 @@
+from pathlib import Path
+
 import numpy as np
 from scipy.signal import cont2discrete
+
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def build_continuous_model(
@@ -38,3 +43,52 @@ def discretize_zoh(
         method="zoh",
     )
     return ad, bd, cd, dd, float(dt)
+
+
+def format_results(sample_times_s: tuple[float, ...]) -> str:
+    """格式化多个采样周期下的 ZOH 离散矩阵。"""
+
+    blocks = ["Mass-Spring-Damper ZOH Discretization"]
+
+    for sample_time_s in sample_times_s:
+        ad, bd, _, _, dt = discretize_zoh(sample_time_s)
+        blocks.extend(
+            [
+                "",
+                f"Ts = {dt:g} s",
+                "Ad =",
+                np.array2string(
+                    ad,
+                    precision=8,
+                    suppress_small=True,
+                ),
+                "Bd =",
+                np.array2string(
+                    bd,
+                    precision=8,
+                    suppress_small=True,
+                ),
+            ]
+        )
+
+    return "\n".join(blocks) + "\n"
+
+
+def write_output(output_text: str) -> Path:
+    """将离散化结果保存为课程实验文本。"""
+
+    output_path = ROOT / "Ad_Bd_output.txt"
+    output_path.write_text(output_text, encoding="utf-8")
+    return output_path
+
+
+def main() -> None:
+    output_text = format_results((0.001, 0.01))
+    output_path = write_output(output_text)
+
+    print(output_text, end="")
+    print(f"\nOutput saved to: {output_path}")
+
+
+if __name__ == "__main__":
+    main()
