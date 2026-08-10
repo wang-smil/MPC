@@ -45,6 +45,20 @@ def discretize_zoh(
     return ad, bd, cd, dd, float(dt)
 
 
+def continuous_poles() -> np.ndarray:
+    """返回连续状态矩阵 A 的极点。"""
+
+    a, _, _, _ = build_continuous_model()
+    return np.linalg.eigvals(a)
+
+
+def discrete_poles(sample_time_s: float) -> np.ndarray:
+    """返回指定采样周期下离散状态矩阵 Ad 的极点。"""
+
+    ad, _, _, _, _ = discretize_zoh(sample_time_s)
+    return np.linalg.eigvals(ad)
+
+
 def format_results(sample_times_s: tuple[float, ...]) -> str:
     """格式化多个采样周期下的 ZOH 离散矩阵。"""
 

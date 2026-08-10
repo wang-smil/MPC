@@ -78,6 +78,24 @@ class ZohDiscretizationTest(unittest.TestCase):
                     self.discretize_zoh(sample_time_s)
 
 
+class PoleCalculationTest(unittest.TestCase):
+    def test_discrete_poles_follow_exponential_mapping(self) -> None:
+        continuous_poles = discretize_demo.continuous_poles()
+
+        self.assertTrue(np.all(np.real(continuous_poles) < 0.0))
+
+        for sample_time_s in (0.001, 0.01, 0.5):
+            with self.subTest(sample_time_s=sample_time_s):
+                expected = np.sort_complex(
+                    np.exp(continuous_poles * sample_time_s)
+                )
+                actual = np.sort_complex(
+                    discretize_demo.discrete_poles(sample_time_s)
+                )
+                np.testing.assert_allclose(actual, expected)
+                self.assertTrue(np.all(np.abs(actual) < 1.0))
+
+
 class OutputArtifactTest(unittest.TestCase):
     def setUp(self) -> None:
         self.format_results = getattr(
