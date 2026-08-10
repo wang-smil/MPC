@@ -29,7 +29,28 @@
 - Produces: `build_continuous_model() -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]`
 - Produces: `discretize_zoh(sample_time_s: float) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, float]`
 
-- [ ] **Step 1: Write failing conversion tests**
+- [ ] **Step 1: Write a failing module-contract test**
+
+First create `test_discretize_demo.py` with this observable artifact contract:
+
+```python
+module_path = PROJECT_ROOT / "src" / "discretize_demo.py"
+self.assertTrue(module_path.is_file(), "discretize_demo.py 尚未创建")
+```
+
+- [ ] **Step 2: Run the module-contract test and verify RED**
+
+```powershell
+conda run -n robot-control python -m unittest lesson03_discretization.tests.test_discretize_demo -v
+```
+
+Expected: assertion failure because the module file is absent.
+
+- [ ] **Step 3: Add an importable module shell**
+
+Create `src/discretize_demo.py` containing imports only. Re-run the module-contract test and confirm it passes.
+
+- [ ] **Step 4: Write failing conversion tests**
 
 Create a test module that imports the `discretize_demo` module and requires `discretize_zoh` with `getattr`:
 
@@ -52,7 +73,7 @@ self.assertFalse(np.allclose(bd_1ms, bd_10ms))
 
 Add a second test asserting `discretize_zoh(0.0)` and `discretize_zoh(-0.001)` each raise `ValueError`.
 
-- [ ] **Step 2: Run the focused test and verify RED**
+- [ ] **Step 5: Run the focused test and verify RED**
 
 ```powershell
 conda run -n robot-control python -m unittest lesson03_discretization.tests.test_discretize_demo -v
@@ -60,7 +81,7 @@ conda run -n robot-control python -m unittest lesson03_discretization.tests.test
 
 Expected: assertion failure because `discretize_zoh()` does not yet exist.
 
-- [ ] **Step 3: Implement the minimum continuous and discrete model**
+- [ ] **Step 6: Implement the minimum continuous and discrete model**
 
 Use this exact continuous model:
 
@@ -75,7 +96,7 @@ def build_continuous_model():
 
 Validate `sample_time_s > 0.0`, call `cont2discrete((A, B, C, D), sample_time_s, method="zoh")`, and return its five values.
 
-- [ ] **Step 4: Run focused and full tests and verify GREEN**
+- [ ] **Step 7: Run focused and full tests and verify GREEN**
 
 ```powershell
 conda run -n robot-control python -m unittest lesson03_discretization.tests.test_discretize_demo -v
@@ -84,7 +105,7 @@ conda run -n robot-control python -m unittest discover -s .\lesson02_servo_contr
 
 Expected: the two new tests and all existing lesson 02 tests pass.
 
-- [ ] **Step 5: Commit the verified conversion core**
+- [ ] **Step 8: Commit the verified conversion core**
 
 ```powershell
 git add lesson03_discretization/src/discretize_demo.py lesson03_discretization/tests/test_discretize_demo.py
