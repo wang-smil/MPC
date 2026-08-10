@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import matplotlib.pyplot as plt
 import numpy as np
 from scipy.signal import cont2discrete
 
@@ -57,6 +58,58 @@ def discrete_poles(sample_time_s: float) -> np.ndarray:
 
     ad, _, _, _, _ = discretize_zoh(sample_time_s)
     return np.linalg.eigvals(ad)
+
+
+def plot_pole_comparison(sample_times_s: tuple[float, ...]) -> Path:
+    """绘制连续极点和不同采样周期的离散极点。"""
+
+    figure, (s_axes, z_axes) = plt.subplots(1, 2, figsize=(10, 4.5))
+
+    s_poles = continuous_poles()
+    s_axes.scatter(
+        np.real(s_poles),
+        np.imag(s_poles),
+        label="Continuous poles",
+    )
+    s_axes.axhline(0.0, color="black", linewidth=0.8)
+    s_axes.axvline(0.0, color="black", linewidth=0.8)
+    s_axes.set_title("s-plane")
+    s_axes.set_xlabel("Real")
+    s_axes.set_ylabel("Imaginary")
+    s_axes.grid(True)
+    s_axes.legend()
+
+    angle = np.linspace(0.0, 2.0 * np.pi, 400)
+    z_axes.plot(
+        np.cos(angle),
+        np.sin(angle),
+        "k--",
+        label="Unit circle",
+    )
+    for sample_time_s in sample_times_s:
+        poles = discrete_poles(sample_time_s)
+        z_axes.scatter(
+            np.real(poles),
+            np.imag(poles),
+            label=f"Ts = {sample_time_s:g} s",
+        )
+
+    z_axes.axhline(0.0, color="black", linewidth=0.8)
+    z_axes.axvline(0.0, color="black", linewidth=0.8)
+    z_axes.set_aspect("equal", adjustable="box")
+    z_axes.set_title("z-plane")
+    z_axes.set_xlabel("Real")
+    z_axes.set_ylabel("Imaginary")
+    z_axes.grid(True)
+    z_axes.legend()
+
+    figure.tight_layout()
+    output_dir = ROOT / "figures"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    figure_path = output_dir / "pole_compare.png"
+    figure.savefig(figure_path, dpi=200)
+    plt.close(figure)
+    return figure_path
 
 
 def format_results(sample_times_s: tuple[float, ...]) -> str:

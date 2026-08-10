@@ -96,6 +96,19 @@ class PoleCalculationTest(unittest.TestCase):
                 self.assertTrue(np.all(np.abs(actual) < 1.0))
 
 
+class PoleFigureTest(unittest.TestCase):
+    def test_plot_pole_comparison_writes_png(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with patch.object(discretize_demo, "ROOT", Path(temp_dir)):
+                figure_path = discretize_demo.plot_pole_comparison(
+                    (0.001, 0.01, 0.5)
+                )
+
+            self.assertEqual(figure_path.name, "pole_compare.png")
+            self.assertTrue(figure_path.is_file())
+            self.assertGreater(figure_path.stat().st_size, 0)
+
+
 class OutputArtifactTest(unittest.TestCase):
     def setUp(self) -> None:
         self.format_results = getattr(
