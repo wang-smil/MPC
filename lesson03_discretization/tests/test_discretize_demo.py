@@ -1,3 +1,5 @@
+from contextlib import redirect_stdout
+from io import StringIO
 from pathlib import Path
 import sys
 import tempfile
@@ -107,6 +109,24 @@ class PoleFigureTest(unittest.TestCase):
             self.assertEqual(figure_path.name, "pole_compare.png")
             self.assertTrue(figure_path.is_file())
             self.assertGreater(figure_path.stat().st_size, 0)
+
+
+class MainExperimentTest(unittest.TestCase):
+    def test_main_runs_500ms_case_and_writes_pole_figure(self) -> None:
+        output_stream = StringIO()
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with patch.object(discretize_demo, "ROOT", Path(temp_dir)):
+                with redirect_stdout(output_stream):
+                    discretize_demo.main()
+
+                figure_path = Path(temp_dir) / "figures" / "pole_compare.png"
+
+            self.assertTrue(figure_path.is_file())
+
+        output_text = output_stream.getvalue()
+        self.assertIn("Ts = 0.5 s", output_text)
+        self.assertIn("Pole figure saved to:", output_text)
 
 
 class OutputArtifactTest(unittest.TestCase):

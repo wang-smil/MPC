@@ -150,11 +150,14 @@ def write_output(output_text: str) -> Path:
 
 
 def main() -> None:
-    output_text = format_results((0.001, 0.01))
+    sample_times_s = (0.001, 0.01, 0.5)
+    output_text = format_results(sample_times_s)
     output_path = write_output(output_text)
+    figure_path = plot_pole_comparison(sample_times_s)
 
     print(output_text, end="")
     print(f"\nOutput saved to: {output_path}")
+    print(f"Pole figure saved to: {figure_path}")
 
 
 if __name__ == "__main__":
