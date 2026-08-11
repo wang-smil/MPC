@@ -1,6 +1,18 @@
+from pathlib import Path
+
+import matplotlib.pyplot as plt
 import numpy as np
 
 from discretize_demo import discretize_zoh
+
+
+ROOT = Path(__file__).resolve().parents[1]
+
+DEFAULT_CASES = {
+    "weak": (2.0, 0.2),
+    "medium": (15.0, 2.0),
+    "strong": (80.0, 2.0),
+}
 
 
 def closed_loop_matrix(
@@ -29,3 +41,94 @@ def is_stable(poles: np.ndarray) -> bool:
     """判断离散极点是否全部严格位于单位圆内。"""
 
     return bool(np.all(np.abs(poles) < 1.0))
+
+
+def sweep_kp(
+    kp_values: np.ndarray,
+    kd: float,
+    sample_time_s: float,
+) -> np.ndarray:
+    """固定 Kd 时，记录每个 Kp 对应的两条闭环极点轨迹。"""
+
+    return np.array(
+        [
+            np.sort_complex(closed_loop_poles(sample_time_s, kp, kd))
+            for kp in kp_values
+        ]
+    )
+
+
+def _draw_unit_circle(axes: plt.Axes) -> None:
+    angle = np.linspace(0.0, 2.0 * np.pi, 500)
+    axes.plot(
+        np.cos(angle),
+        np.sin(angle),
+        "k--",
+        label="Unit circle",
+    )
+    axes.axhline(0.0, color="black", linewidth=0.8)
+    axes.axvline(0.0, color="black", linewidth=0.8)
+    axes.set_aspect("equal", adjustable="box")
+    axes.set_xlabel("Real")
+    axes.set_ylabel("Imaginary")
+    axes.grid(True)
+
+
+def _figure_path(filename: str) -> Path:
+    output_dir = ROOT / "figures"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    return output_dir / filename
+
+
+def plot_closed_loop_poles(
+    cases: dict[str, tuple[float, float]],
+) -> Path:
+    """绘制三个典型 PD 增益下的 10 ms 闭环极点。"""
+
+    figure, axes = plt.subplots(figsize=(7, 7))
+    _draw_unit_circle(axes)
+
+    for name, (kp, kd) in cases.items():
+        poles = closed_loop_poles(0.01, kp, kd)
+        axes.scatter(
+            np.real(poles),
+            np.imag(poles),
+            label=f"{name}: Kp={kp:g}, Kd={kd:g}",
+        )
+
+    axes.set_title("Discrete PD Closed-Loop Poles (Ts = 10 ms)")
+    axes.legend()
+    figure.tight_layout()
+
+    figure_path = _figure_path("closed_loop_poles.png")
+    figure.savefig(figure_path, dpi=200)
+    plt.close(figure)
+    return figure_path
+
+
+def plot_gain_sweep(
+    kp_values: np.ndarray,
+    kd: float,
+    sample_time_s: float,
+) -> Path:
+    """绘制固定 Kd 时，闭环极点随 Kp 移动的轨迹。"""
+
+    history = sweep_kp(kp_values, kd, sample_time_s)
+    figure, axes = plt.subplots(figsize=(7, 7))
+    _draw_unit_circle(axes)
+
+    for pole_index in range(history.shape[1]):
+        axes.plot(
+            np.real(history[:, pole_index]),
+            np.imag(history[:, pole_index]),
+            label=f"Pole {pole_index + 1}",
+        )
+
+    axes.set_title(f"Kp Sweep (Kd = {kd:g}, Ts = {sample_time_s:g} s)")
+    axes.legend()
+    figure.tight_layout()
+
+    figure_path = _figure_path("gain_sweep.png")
+    figure.savefig(figure_path, dpi=200)
+    plt.close(figure)
+    return figure_path
