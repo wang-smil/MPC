@@ -59,5 +59,18 @@ class ClosedLoopArtifactTest(unittest.TestCase):
             self.assertGreater(sweep_path.stat().st_size, 0)
 
 
+class ClosedLoopReportTest(unittest.TestCase):
+    def test_report_records_closed_loop_boundary(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with patch.object(closed_loop_poles, "ROOT", Path(temp_dir)):
+                report_path = closed_loop_poles.write_analysis_report()
+
+            report_text = report_path.read_text(encoding="utf-8")
+
+        self.assertIn("Ad - Bd @ K", report_text)
+        self.assertIn("噪声", report_text)
+        self.assertIn("100 ms", report_text)
+
+
 if __name__ == "__main__":
     unittest.main()
