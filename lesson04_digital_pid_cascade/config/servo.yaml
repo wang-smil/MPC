@@ -1,0 +1,8 @@
+simulation:
+  dt: 0.001
+  duration: 4.0
+plant:
+  inertia: 0.020
+  damping: 0.080
+actuator:
+  torque_limit: 3.0
