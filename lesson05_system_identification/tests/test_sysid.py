@@ -8,7 +8,9 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from excitation import MultiSineExcitation
+from estimator import identify_j_b
 from plant import SingleAxisPlant
+from signal_processing import lowpass
 
 
 class ExcitationTest(unittest.TestCase):
@@ -38,6 +40,29 @@ class PlantTest(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             plant.step(0.0, 0.0)
+
+
+class EstimatorTest(unittest.TestCase):
+    def test_exact_data_recovers_inertia_and_damping(self):
+        velocity = np.array([-2.0, -1.0, 0.5, 1.5])
+        acceleration = np.array([3.0, -2.0, 1.0, 4.0])
+        torque = 0.02 * acceleration + 0.08 * velocity
+
+        result = identify_j_b(velocity, acceleration, torque)
+
+        self.assertAlmostEqual(result["inertia_hat"], 0.02)
+        self.assertAlmostEqual(result["damping_hat"], 0.08)
+        self.assertAlmostEqual(result["torque_rmse"], 0.0)
+
+    def test_rank_deficient_data_is_rejected(self):
+        with self.assertRaises(ValueError):
+            identify_j_b(np.ones(5), 2.0 * np.ones(5), np.ones(5))
+
+
+class SignalProcessingTest(unittest.TestCase):
+    def test_nonpositive_sample_period_is_rejected(self):
+        with self.assertRaises(ValueError):
+            lowpass(np.ones(20), 0.0, 10.0)
 
 
 if __name__ == "__main__":
