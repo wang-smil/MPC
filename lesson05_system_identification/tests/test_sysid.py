@@ -8,6 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from excitation import MultiSineExcitation
+from plant import SingleAxisPlant
 
 
 class ExcitationTest(unittest.TestCase):
@@ -21,6 +22,22 @@ class ExcitationTest(unittest.TestCase):
     def test_mismatched_lists_are_rejected(self):
         with self.assertRaises(ValueError):
             MultiSineExcitation([0.5], [0.4, 0.2])
+
+
+class PlantTest(unittest.TestCase):
+    def test_torque_is_limited_and_acceleration_uses_applied_torque(self):
+        plant = SingleAxisPlant(0.02, 0.08, 0.0, torque_limit_nm=2.0)
+
+        sample = plant.step(5.0, 0.001)
+
+        self.assertEqual(sample["torque_applied_nm"], 2.0)
+        self.assertAlmostEqual(sample["acceleration_true_rad_s2"], 100.0)
+
+    def test_nonpositive_dt_is_rejected(self):
+        plant = SingleAxisPlant(0.02, 0.08, 0.0, torque_limit_nm=2.0)
+
+        with self.assertRaises(ValueError):
+            plant.step(0.0, 0.0)
 
 
 if __name__ == "__main__":
