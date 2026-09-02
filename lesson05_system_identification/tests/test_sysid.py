@@ -9,6 +9,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from excitation import MultiSineExcitation
 from estimator import identify_j_b
+from metrics import calculate_metrics
 from plant import SingleAxisPlant
 from signal_processing import lowpass
 
@@ -63,6 +64,27 @@ class SignalProcessingTest(unittest.TestCase):
     def test_nonpositive_sample_period_is_rejected(self):
         with self.assertRaises(ValueError):
             lowpass(np.ones(20), 0.0, 10.0)
+
+
+class MetricsTest(unittest.TestCase):
+    def test_metrics_report_parameter_and_validation_errors(self):
+        metrics = calculate_metrics(
+            {
+                "inertia_hat": 0.021,
+                "damping_hat": 0.076,
+                "torque_rmse": 0.03,
+                "condition_number": 8.0,
+            },
+            {"inertia": 0.020, "damping": 0.080},
+            np.array([0.0, 1.0]),
+            np.array([0.0, 1.2]),
+        )
+
+        self.assertAlmostEqual(metrics["inertia_error_percent"], 5.0)
+        self.assertAlmostEqual(metrics["damping_error_percent"], 5.0)
+        self.assertAlmostEqual(
+            metrics["validation_position_rmse_rad"], np.sqrt(0.02)
+        )
 
 
 if __name__ == "__main__":
