@@ -1,5 +1,6 @@
 from pathlib import Path
 import sys
+import tempfile
 import unittest
 
 import numpy as np
@@ -9,9 +10,10 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from excitation import MultiSineExcitation
 from estimator import identify_j_b
-from metrics import calculate_metrics
+from metrics import calculate_metrics, rmse
 from plant import SingleAxisPlant
 from signal_processing import lowpass
+from run_sysid import run_case, run_validation
 
 
 class ExcitationTest(unittest.TestCase):
@@ -85,6 +87,75 @@ class MetricsTest(unittest.TestCase):
         self.assertAlmostEqual(
             metrics["validation_position_rmse_rad"], np.sqrt(0.02)
         )
+
+
+class RunnerTest(unittest.TestCase):
+    def test_normal_case_writes_applied_torque_log_and_parameters(self):
+        config = {
+            "simulation": {"dt": 0.002, "duration_s": 2.0, "seed": 7},
+            "plant_true": {
+                "inertia": 0.02,
+                "damping": 0.08,
+                "coulomb_friction": 0.0,
+            },
+            "sensor": {"position_noise_std_deg": 0.0},
+            "actuator": {"torque_limit_nm": 2.0},
+            "excitation": {
+                "frequencies_hz": [0.5, 1.3],
+                "amplitudes_nm": [0.45, 0.30],
+            },
+            "identification": {"discard_start_s": 0.2, "lowpass_cutoff_hz": 15.0},
+        }
+        with tempfile.TemporaryDirectory() as output_dir:
+            result = run_case("normal", config, Path(output_dir))
+
+            self.assertIn("torque_applied_nm", result["log_columns"])
+            self.assertTrue(result["parameters_path"].is_file())
+            self.assertTrue(result["figure_path"].is_file())
+
+    def test_validation_keeps_normal_case_linear(self):
+        config = {
+            "simulation": {"dt": 0.002, "duration_s": 4.0, "seed": 7},
+            "plant_true": {
+                "inertia": 0.02,
+                "damping": 0.08,
+                "coulomb_friction": 0.10,
+            },
+            "sensor": {"position_noise_std_deg": 0.0},
+            "actuator": {"torque_limit_nm": 2.0},
+            "excitation": {
+                "frequencies_hz": [0.5, 1.3],
+                "amplitudes_nm": [0.45, 0.30],
+            },
+            "identification": {"discard_start_s": 0.2, "lowpass_cutoff_hz": 15.0},
+        }
+        with tempfile.TemporaryDirectory() as output_dir:
+            result = run_validation(config, 0.02, 0.08, Path(output_dir))
+
+        self.assertLess(
+            rmse(result["true_position_rad"], result["model_position_rad"]), 0.01
+        )
+
+    def test_model_mismatch_writes_residual_diagnostic(self):
+        config = {
+            "simulation": {"dt": 0.002, "duration_s": 2.0, "seed": 7},
+            "plant_true": {
+                "inertia": 0.02,
+                "damping": 0.08,
+                "coulomb_friction": 0.10,
+            },
+            "sensor": {"position_noise_std_deg": 0.02},
+            "actuator": {"torque_limit_nm": 2.0},
+            "excitation": {
+                "frequencies_hz": [0.5, 1.3],
+                "amplitudes_nm": [0.45, 0.30],
+            },
+            "identification": {"discard_start_s": 0.2, "lowpass_cutoff_hz": 15.0},
+        }
+        with tempfile.TemporaryDirectory() as output_dir:
+            result = run_case("model_mismatch", config, Path(output_dir))
+
+            self.assertTrue(result["residual_figure_path"].is_file())
 
 
 if __name__ == "__main__":

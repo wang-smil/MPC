@@ -1,0 +1,8 @@
+{
+  "case": "poor_excitation",
+  "inertia_hat": 0.019652702655352534,
+  "damping_hat": 0.07994419625196968,
+  "rank": 2,
+  "condition_number": 3.153353311990131,
+  "torque_rmse": 0.025117303802460692
+}
