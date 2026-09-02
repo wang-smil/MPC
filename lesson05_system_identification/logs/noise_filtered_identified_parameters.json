@@ -1,0 +1,8 @@
+{
+  "case": "noise_filtered",
+  "inertia_hat": 0.01196634913325816,
+  "damping_hat": 0.07942618670329141,
+  "rank": 2,
+  "condition_number": 5.644953603520939,
+  "torque_rmse": 0.18506565153498522
+}

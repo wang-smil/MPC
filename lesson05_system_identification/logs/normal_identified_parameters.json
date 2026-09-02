@@ -1,0 +1,8 @@
+{
+  "case": "normal",
+  "inertia_hat": 0.019762017083829846,
+  "damping_hat": 0.08025715050852328,
+  "rank": 2,
+  "condition_number": 4.395430108295884,
+  "torque_rmse": 0.02386144409017128
+}

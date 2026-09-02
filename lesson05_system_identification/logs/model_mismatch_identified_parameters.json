@@ -1,0 +1,8 @@
+{
+  "case": "model_mismatch",
+  "inertia_hat": 0.01970972239688279,
+  "damping_hat": 0.11136702426916491,
+  "rank": 2,
+  "condition_number": 4.861005418913145,
+  "torque_rmse": 0.05481431726865859
+}
