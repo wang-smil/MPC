@@ -1,0 +1,24 @@
+shared:
+  max_amplitude_nm: 0.5
+  duration_s: 12.0
+  dt_s: 0.001
+
+cases:
+  constant:
+    type: constant
+    amplitude_nm: 0.5
+  single_sine:
+    type: single_sine
+    amplitude_nm: 0.5
+    frequency_hz: 1.0
+    phase_rad: 0.0
+  multisine:
+    type: multisine
+    frequencies_hz: [0.4, 1.1, 2.4, 4.0]
+    amplitudes_nm: [0.20, 0.15, 0.10, 0.05]
+    phases_rad: [0.0, 0.6, 1.2, 2.0]
+  prbs:
+    type: prbs
+    amplitude_nm: 0.5
+    hold_time_s: 0.10
+    seed: 2026
