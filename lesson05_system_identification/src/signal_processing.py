@@ -1,7 +1,7 @@
 """Measurement processing for the system-identification pipeline."""
 
 import numpy as np
-from scipy.signal import butter, sosfiltfilt
+from scipy.signal import butter, savgol_filter, sosfiltfilt
 
 
 def add_position_noise(
@@ -65,3 +65,35 @@ def discard_before(
     if not np.any(mask):
         raise ValueError("discard_start_s removes all samples.")
     return time[mask], [np.asarray(array)[mask] for array in arrays]
+
+def savgol_derivatives(
+    position_rad: np.ndarray,
+    dt_s: float,
+    window_length: int,
+    polyorder: int = 3,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Estimate derivatives with a centred, offline Savitzky-Golay filter."""
+    position = np.asarray(position_rad, dtype=float)
+    if dt_s <= 0.0:
+        raise ValueError("dt_s must be positive.")
+    if window_length % 2 == 0 or window_length <= polyorder:
+        raise ValueError("window_length must be odd and greater than polyorder.")
+    if position.ndim != 1 or len(position) < window_length:
+        raise ValueError("position_rad must contain at least window_length samples.")
+
+    velocity = savgol_filter(
+        position,
+        window_length=window_length,
+        polyorder=polyorder,
+        deriv=1,
+        delta=dt_s,
+    )
+    acceleration = savgol_filter(
+        position,
+        window_length=window_length,
+        polyorder=polyorder,
+        deriv=2,
+        delta=dt_s,
+    )
+    return velocity, acceleration
+
