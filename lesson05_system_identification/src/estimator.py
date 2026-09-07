@@ -35,6 +35,50 @@ def identify_j_b(
     return {
         "inertia_hat": float(theta_hat[0]),
         "damping_hat": float(theta_hat[1]),
+
+        "rank": int(rank),
+        "condition_number": float(np.linalg.cond(phi)),
+        "torque_predicted_nm": torque_predicted,
+        "residual_nm": residual,
+        "torque_rmse": float(np.sqrt(np.mean(residual**2))),
+    }
+
+def identify_j_b_tau_c(
+    velocity: np.ndarray,
+    acceleration: np.ndarray,
+    torque: np.ndarray,
+    friction_smoothing_rad_s: float,
+) -> dict[str, float | int | np.ndarray]:
+    """Fit ``tau = J*a + b*v + tau_c*tanh(v/epsilon)`` by least squares."""
+
+    velocity_array = np.asarray(velocity, dtype=float)
+    acceleration_array = np.asarray(acceleration, dtype=float)
+    torque_array = np.asarray(torque, dtype=float)
+    if friction_smoothing_rad_s <= 0.0:
+        raise ValueError("friction_smoothing_rad_s must be positive.")
+    if (
+        velocity_array.ndim != 1
+        or acceleration_array.ndim != 1
+        or torque_array.ndim != 1
+        or not (
+            len(velocity_array) == len(acceleration_array) == len(torque_array)
+        )
+    ):
+        raise ValueError("velocity, acceleration, and torque must be matching vectors.")
+    if len(torque_array) < 3:
+        raise ValueError("at least three samples are required.")
+
+    friction_basis = np.tanh(velocity_array / friction_smoothing_rad_s)
+    phi = np.column_stack([acceleration_array, velocity_array, friction_basis])
+    theta_hat, _, rank, _ = np.linalg.lstsq(phi, torque_array, rcond=None)
+    if rank < 3:
+        raise ValueError("Identification regression is rank deficient.")
+    torque_predicted = phi @ theta_hat
+    residual = torque_array - torque_predicted
+    return {
+        "inertia_hat": float(theta_hat[0]),
+        "damping_hat": float(theta_hat[1]),
+        "coulomb_friction_hat": float(theta_hat[2]),
         "rank": int(rank),
         "condition_number": float(np.linalg.cond(phi)),
         "torque_predicted_nm": torque_predicted,
