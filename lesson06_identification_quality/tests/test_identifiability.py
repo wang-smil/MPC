@@ -1,13 +1,8 @@
-from pathlib import Path
-import sys
 import unittest
 
 import numpy as np
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "src"))
-
-from excitation import ConstantTorque, PRBSExcitation, SingleSine
+from lesson05_system_identification.src.excitation import ConstantTorque, PRBSExcitation, SingleSine
 
 
 class ExcitationStrategyTest(unittest.TestCase):

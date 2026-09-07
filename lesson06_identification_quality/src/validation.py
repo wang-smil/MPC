@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import numpy as np
 
-from .excitation import MultiSine
-from .plant import SingleAxisPlant
+from lesson05_system_identification.src.excitation import MultiSine
+from lesson05_system_identification.src.plant import SingleAxisPlant
 from .quality_experiments import compare_friction_models
 
 

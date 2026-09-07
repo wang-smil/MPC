@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from lesson05_system_identification.src.run_excitation_quality import run_experiment
+from lesson06_identification_quality.src.run_excitation_quality import run_experiment
 
 
 class ExcitationQualityRunnerTest(unittest.TestCase):

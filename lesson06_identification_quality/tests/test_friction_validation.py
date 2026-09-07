@@ -2,7 +2,7 @@
 
 import unittest
 
-from lesson05_system_identification.src.quality_experiments import (
+from lesson06_identification_quality.src.quality_experiments import (
     validate_friction_models,
 )
 

@@ -1,13 +1,8 @@
-from pathlib import Path
-import sys
 import unittest
 
 import numpy as np
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "src"))
-
-from identifiability import analyse_regressor
+from lesson05_system_identification.src.identifiability import analyse_regressor
 
 
 class IdentifiabilityTest(unittest.TestCase):

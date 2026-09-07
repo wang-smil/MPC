@@ -14,8 +14,8 @@ def compare_friction_models(
 
     import numpy as np
 
-    from .estimator import identify_j_b, identify_j_b_tau_c
-    from .signal_processing import add_position_noise
+    from lesson05_system_identification.src.estimator import identify_j_b, identify_j_b_tau_c
+    from lesson05_system_identification.src.signal_processing import add_position_noise
 
     if duration_s <= 0.0 or dt_s <= 0.0 or position_noise_std_deg < 0.0:
         raise ValueError("duration_s, dt_s must be positive and noise cannot be negative.")
@@ -65,8 +65,8 @@ def compare_savgol_windows(
 
     import numpy as np
 
-    from .estimator import identify_j_b
-    from .signal_processing import add_position_noise
+    from lesson05_system_identification.src.estimator import identify_j_b
+    from lesson05_system_identification.src.signal_processing import add_position_noise
 
     if not window_lengths or duration_s <= 0.0 or dt_s <= 0.0:
         raise ValueError("window_lengths, duration_s and dt_s must be positive.")
@@ -118,8 +118,8 @@ def compare_noisy_identification(
 
     import numpy as np
 
-    from .estimator import identify_j_b
-    from .signal_processing import add_position_noise
+    from lesson05_system_identification.src.estimator import identify_j_b
+    from lesson05_system_identification.src.signal_processing import add_position_noise
 
     if duration_s <= 0.0 or dt_s <= 0.0 or position_noise_std_deg < 0.0:
         raise ValueError("duration_s, dt_s must be positive and noise cannot be negative.")
@@ -171,10 +171,10 @@ def compare_noisy_identification(
 
 import numpy as np
 
-from .excitation import ConstantTorque, ExcitationSignal, MultiSine, PRBSExcitation, SingleSine
-from .identifiability import analyse_regressor
-from .plant import SingleAxisPlant
-from .signal_processing import savgol_derivatives
+from lesson05_system_identification.src.excitation import ConstantTorque, ExcitationSignal, MultiSine, PRBSExcitation, SingleSine
+from lesson05_system_identification.src.identifiability import analyse_regressor
+from lesson05_system_identification.src.plant import SingleAxisPlant
+from lesson05_system_identification.src.signal_processing import savgol_derivatives
 
 
 def default_excitation_signals() -> dict[str, ExcitationSignal]:

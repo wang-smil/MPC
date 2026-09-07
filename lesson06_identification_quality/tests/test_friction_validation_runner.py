@@ -1,14 +1,14 @@
-"""Test the executable Experiment B runner."""
+"""Test the executable Experiment D runner."""
 
 import tempfile
 import unittest
 from pathlib import Path
 
-from lesson05_system_identification.src.run_savgol_sensitivity import run_experiment
+from lesson06_identification_quality.src.run_friction_validation import run_experiment
 
 
-class SavgolSensitivityRunnerTest(unittest.TestCase):
-    def test_runner_writes_a_window_comparison_figure(self) -> None:
+class FrictionValidationRunnerTest(unittest.TestCase):
+    def test_runner_writes_a_validation_figure(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             result = run_experiment(
                 duration_s=2.0,
@@ -16,8 +16,8 @@ class SavgolSensitivityRunnerTest(unittest.TestCase):
                 output_root=Path(temporary_directory),
             )
 
-            self.assertEqual(set(result["results"]), {11, 31, 61, 101})
             self.assertTrue(result["figure_path"].is_file())
+            self.assertIn("nominal", result["results"])
 
 
 if __name__ == "__main__":

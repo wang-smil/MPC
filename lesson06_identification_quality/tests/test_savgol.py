@@ -1,13 +1,8 @@
-from pathlib import Path
-import sys
 import unittest
 
 import numpy as np
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "src"))
-
-from signal_processing import savgol_derivatives
+from lesson05_system_identification.src.signal_processing import savgol_derivatives
 
 
 class SavgolDerivativeTest(unittest.TestCase):

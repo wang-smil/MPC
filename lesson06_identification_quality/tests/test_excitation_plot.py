@@ -1,13 +1,9 @@
 from pathlib import Path
-import sys
 import tempfile
 import unittest
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "src"))
-
-from excitation import ConstantTorque, PRBSExcitation, SingleSine
-from plot_excitations import plot_excitation_comparison
+from lesson05_system_identification.src.excitation import ConstantTorque, PRBSExcitation, SingleSine
+from lesson06_identification_quality.src.plot_excitations import plot_excitation_comparison
 
 
 class ExcitationPlotTest(unittest.TestCase):

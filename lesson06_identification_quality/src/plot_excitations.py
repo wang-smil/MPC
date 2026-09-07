@@ -5,7 +5,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 
-from excitation import ExcitationSignal
+from lesson05_system_identification.src.excitation import ExcitationSignal
 
 
 def plot_excitation_comparison(
