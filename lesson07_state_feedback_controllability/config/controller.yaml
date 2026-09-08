@@ -1,0 +1,26 @@
+simulation:
+  dt_s: 0.01
+  duration_s: 4.0
+  seed: 2027
+
+model:
+  # Lesson 05 normal/validated identification result.
+  inertia: 0.019762
+  damping: 0.080257
+
+controller:
+  damping_ratio: 0.8
+  settling_time_s: 0.8
+
+reference:
+  target_deg: 30.0
+
+actuator:
+  torque_limit_nm: 3.0
+
+sensor:
+  position_noise_std_deg: 0.03
+  velocity_filter_alpha: 0.90
+
+stress:
+  payload_inertia_scale: 1.30
