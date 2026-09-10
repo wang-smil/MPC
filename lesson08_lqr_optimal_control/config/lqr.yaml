@@ -1,0 +1,36 @@
+simulation:
+  dt_s: 0.001
+  duration_s: 4.0
+  seed: 2028
+
+model:
+  source: lesson06_identification_quality_validated_result
+  inertia: 0.019762
+  damping: 0.080257
+
+reference:
+  target_deg: 30.0
+
+design_limits:
+  max_position_error_deg: 5.0
+  max_velocity_error_rad_s: 1.5
+  max_torque_nm: 3.0
+
+lqr:
+  position_weight_scale: 1.0
+  velocity_weight_scale: 1.0
+  torque_weight_scale: 1.0
+
+sensor:
+  position_noise_std_deg: 0.03
+  velocity_noise_std_rad_s: 0.03
+
+pole_placement:
+  damping_ratio: 0.8
+  settling_time_s: 0.8
+
+stress:
+  payload_scale: 1.30
+  load_start_s: 1.0
+  load_torque_nm: 1.0
+  torque_limit_nm: 1.5
