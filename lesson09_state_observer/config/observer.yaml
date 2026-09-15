@@ -1,0 +1,35 @@
+simulation:
+  dt_s: 0.001
+  duration_s: 4.0
+  seed: 2026
+
+model:
+  inertia: 0.019762
+  damping: 0.080257
+
+measurement:
+  position_noise_std_deg: 0.05
+  encoder_bias_deg: 0.5
+
+observer:
+  speed_factors: [2.0, 4.0, 10.0]
+  nominal_speed_factor: 4.0
+
+initial_condition:
+  q_true_deg: 20.0
+  dq_true_rad_s: 0.5
+  q_hat_deg: 0.0
+  dq_hat_rad_s: 0.0
+
+controller:
+  target_deg: 30.0
+  max_position_error_deg: 5.0
+  max_velocity_error_rad_s: 1.5
+  torque_limit_nm: 3.0
+
+stress:
+  payload_scale: 1.30
+  high_noise_scale: 10.0
+
+velocity_difference:
+  lpf_alpha: 0.90
