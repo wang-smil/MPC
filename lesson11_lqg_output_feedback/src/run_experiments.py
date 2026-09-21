@@ -125,12 +125,20 @@ def _format_metrics(metrics: dict[str, float], keys: tuple[str, ...]) -> str:
 def _write_report(path: Path, separation: dict, metrics: dict[str, dict[str, float]]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     rows = []
+    window_rows = []
     for name, values in metrics.items():
         rows.append(
             f"| {name} | {values['tracking_rmse_rad']:.6g} | {values['q_estimation_rmse_rad']:.6g} | "
             f"{values['dq_estimation_rmse_rad_s']:.6g} | {values['control_rms_nm']:.6g} | "
             f"{values['saturation_ratio_percent']:.4g} | {values['nis_mean']:.6g} |"
         )
+        if name in {"recursive", "steady_state"}:
+            window_rows.extend(
+                [
+                    f"| {name} startup | {values['startup_q_estimation_rmse_rad']:.6g} | {values['startup_dq_estimation_rmse_rad_s']:.6g} |",
+                    f"| {name} steady | {values['steady_q_estimation_rmse_rad']:.6g} | {values['steady_dq_estimation_rmse_rad_s']:.6g} |",
+                ]
+            )
     content = """# Lesson 11 — LQG Output Feedback Engineering Report
 
 ## Scope
@@ -153,6 +161,12 @@ This confirms the eigenvalue union only for the matched, linear, unsaturated mod
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 {rows}
 
+## C. Startup versus steady-state estimator error
+
+| Estimator and window | q-hat RMSE / rad | dq-hat RMSE / rad/s |
+| --- | ---: | ---: |
+{window_rows}
+
 `full_state` is a simulation-only upper/reference baseline and deliberately has no estimator statistics.  Compare `recursive` against `steady_state` over the logged startup (0–0.5 s) and steady windows; a transient difference is expected because only the recursive covariance/gain evolves.
 
 The `q_scale_*` rows keep the LQR gain fixed while changing only the assumed process covariance.  Any changed tracking/control behavior demonstrates that independent LQR/KF design does not make runtime performance independent.
@@ -166,6 +180,7 @@ Replace only the simulated encoder/plant boundary with hardware I/O.  Keep `LQGC
         union_error=separation["union_error"],
         stable="yes" if separation["is_stable"] else "no",
         rows="\n".join(rows),
+        window_rows="\n".join(window_rows),
     )
     path.write_text(content, encoding="utf-8")
 

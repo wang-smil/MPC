@@ -28,6 +28,15 @@ This confirms the eigenvalue union only for the matched, linear, unsaturated mod
 | load | 0.0270742 | 0.00152039 | 0.199205 | 0.302917 | 0.06 | 4.28885 |
 | reduced_limit | 0.0292764 | 0.00152041 | 0.199111 | 0.281181 | 14.68 | 4.28873 |
 
+## C. Startup versus steady-state estimator error
+
+| Estimator and window | q-hat RMSE / rad | dq-hat RMSE / rad/s |
+| --- | ---: | ---: |
+| recursive startup | 0.000285989 | 0.0538162 |
+| recursive steady | 0.00159997 | 0.209235 |
+| steady_state startup | 0.0284978 | 2.59448 |
+| steady_state steady | 0.00159997 | 0.209235 |
+
 `full_state` is a simulation-only upper/reference baseline and deliberately has no estimator statistics.  Compare `recursive` against `steady_state` over the logged startup (0–0.5 s) and steady windows; a transient difference is expected because only the recursive covariance/gain evolves.
 
 The `q_scale_*` rows keep the LQR gain fixed while changing only the assumed process covariance.  Any changed tracking/control behavior demonstrates that independent LQR/KF design does not make runtime performance independent.
