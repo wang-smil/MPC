@@ -14,28 +14,36 @@ The `dlqe` gain is in predictor form, so the analysis uses `A_e = A_d - L_e C`. 
 
 This confirms the eigenvalue union only for the matched, linear, unsaturated model; it is not a guarantee for a clipped actuator.
 
+### Numerical pole evidence
+
+Controller poles: 0.98271549+0.00000000j, 0.90508294+0.00000000j
+
+Estimator predictor poles: 0.93412917+0.06167386j, 0.93412917-0.06167386j
+
+Augmented LQG poles: 0.98271549+0.00000000j, 0.90508294+0.00000000j, 0.93412917+0.06167386j, 0.93412917-0.06167386j
+
 ## B–E quantitative results
 
-| Scenario | tracking RMSE / rad | q-hat RMSE / rad | dq-hat RMSE / rad/s | control RMS / N m | saturation / % | mean NIS |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| full_state | 0.0171837 | nan | nan | 0.305058 | 0.1 | nan |
-| recursive | 0.0270742 | 0.00152039 | 0.199205 | 0.302917 | 0.06 | 4.28885 |
-| steady_state | 0.0371336 | 0.0091476 | 0.84491 | 0.445391 | 1.22 | 125.289 |
-| q_scale_0.1 | 0.0384715 | 0.00484677 | 0.3478 | 0.301195 | 0.06 | 33.9756 |
-| q_scale_1 | 0.0270742 | 0.00152039 | 0.199205 | 0.302917 | 0.06 | 4.28885 |
-| q_scale_10 | 0.0218755 | 0.000575708 | 0.117041 | 0.311754 | 0.06 | 1.27275 |
-| normal | 0.0151853 | 0.00030444 | 0.0319288 | 0.130161 | 0.06 | 0.990755 |
-| load | 0.0270742 | 0.00152039 | 0.199205 | 0.302917 | 0.06 | 4.28885 |
-| reduced_limit | 0.0292764 | 0.00152041 | 0.199111 | 0.281181 | 14.68 | 4.28873 |
+| Scenario | tracking RMSE / rad | q-hat RMSE / rad | dq-hat RMSE / rad/s | control RMS / N m | peak torque / N m | saturation / % | innovation RMS / rad | mean NIS |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| full_state | 0.0172168 | nan | nan | 0.305295 | 3 | 0.1 | nan | nan |
+| recursive | 0.0270594 | 0.00152051 | 0.199152 | 0.304541 | 3 | 0.08 | 0.00528994 | 4.28912 |
+| steady_state | 0.0371667 | 0.00914783 | 0.846824 | 0.446993 | 3 | 1.22 | 0.0104132 | 125.296 |
+| q_scale_0.1 | 0.0384564 | 0.00484729 | 0.347754 | 0.3028 | 3 | 0.08 | 0.00721347 | 33.9833 |
+| q_scale_1 | 0.0270594 | 0.00152051 | 0.199152 | 0.304541 | 3 | 0.08 | 0.00528994 | 4.28912 |
+| q_scale_10 | 0.0218682 | 0.000574561 | 0.117017 | 0.313352 | 3 | 0.08 | 0.00504868 | 1.27053 |
+| normal | 0.015158 | 0.000304571 | 0.031622 | 0.133841 | 3 | 0.08 | 0.00501286 | 0.990516 |
+| load | 0.0270594 | 0.00152051 | 0.199152 | 0.304541 | 3 | 0.08 | 0.00528994 | 4.28912 |
+| reduced_limit | 0.029322 | 0.00152051 | 0.199152 | 0.281323 | 0.4 | 15.04 | 0.00528994 | 4.28912 |
 
 ## C. Startup versus steady-state estimator error
 
 | Estimator and window | q-hat RMSE / rad | dq-hat RMSE / rad/s |
 | --- | ---: | ---: |
-| recursive startup | 0.000285989 | 0.0538162 |
-| recursive steady | 0.00159997 | 0.209235 |
-| steady_state startup | 0.0284978 | 2.59448 |
-| steady_state steady | 0.00159997 | 0.209235 |
+| recursive startup | 0.000284387 | 0.0497139 |
+| recursive steady | 0.00160013 | 0.209291 |
+| steady_state startup | 0.0284985 | 2.60066 |
+| steady_state steady | 0.00160013 | 0.209291 |
 
 `full_state` is a simulation-only upper/reference baseline and deliberately has no estimator statistics.  Compare `recursive` against `steady_state` over the logged startup (0–0.5 s) and steady windows; a transient difference is expected because only the recursive covariance/gain evolves.
 

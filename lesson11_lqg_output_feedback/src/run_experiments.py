@@ -34,6 +34,20 @@ def _save_figure(figure: plt.Figure, path: Path) -> None:
     plt.close(figure)
 
 
+def _write_separation_poles(path: Path, separation: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", newline="", encoding="utf-8") as stream:
+        writer = csv.writer(stream)
+        writer.writerow(["pole_set", "index", "real", "imaginary"])
+        for pole_set, poles in (
+            ("controller", separation["eig_controller"]),
+            ("estimator_predictor", separation["eig_estimator"]),
+            ("augmented", separation["eig_augmented"]),
+        ):
+            for index, pole in enumerate(poles):
+                writer.writerow([pole_set, index, float(pole.real), float(pole.imag)])
+
+
 def _plot_separation(result: dict, path: Path) -> None:
     figure, axis = plt.subplots(figsize=(6.8, 6.0))
     theta = np.linspace(0.0, 2.0 * np.pi, 400)
@@ -130,7 +144,8 @@ def _write_report(path: Path, separation: dict, metrics: dict[str, dict[str, flo
         rows.append(
             f"| {name} | {values['tracking_rmse_rad']:.6g} | {values['q_estimation_rmse_rad']:.6g} | "
             f"{values['dq_estimation_rmse_rad_s']:.6g} | {values['control_rms_nm']:.6g} | "
-            f"{values['saturation_ratio_percent']:.4g} | {values['nis_mean']:.6g} |"
+            f"{values['peak_torque_nm']:.6g} | {values['saturation_ratio_percent']:.4g} | "
+            f"{values['innovation_rms_rad']:.6g} | {values['nis_mean']:.6g} |"
         )
         if name in {"recursive", "steady_state"}:
             window_rows.extend(
@@ -155,10 +170,18 @@ The `dlqe` gain is in predictor form, so the analysis uses `A_e = A_d - L_e C`. 
 
 This confirms the eigenvalue union only for the matched, linear, unsaturated model; it is not a guarantee for a clipped actuator.
 
+### Numerical pole evidence
+
+Controller poles: {controller_poles}
+
+Estimator predictor poles: {estimator_poles}
+
+Augmented LQG poles: {augmented_poles}
+
 ## B–E quantitative results
 
-| Scenario | tracking RMSE / rad | q-hat RMSE / rad | dq-hat RMSE / rad/s | control RMS / N m | saturation / % | mean NIS |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Scenario | tracking RMSE / rad | q-hat RMSE / rad | dq-hat RMSE / rad/s | control RMS / N m | peak torque / N m | saturation / % | innovation RMS / rad | mean NIS |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 {rows}
 
 ## C. Startup versus steady-state estimator error
@@ -179,6 +202,9 @@ Replace only the simulated encoder/plant boundary with hardware I/O.  Keep `LQGC
 """.format(
         union_error=separation["union_error"],
         stable="yes" if separation["is_stable"] else "no",
+        controller_poles=", ".join(f"{pole.real:.8f}{pole.imag:+.8f}j" for pole in separation["eig_controller"]),
+        estimator_poles=", ".join(f"{pole.real:.8f}{pole.imag:+.8f}j" for pole in separation["eig_estimator"]),
+        augmented_poles=", ".join(f"{pole.real:.8f}{pole.imag:+.8f}j" for pole in separation["eig_augmented"]),
         rows="\n".join(rows),
         window_rows="\n".join(window_rows),
     )
@@ -226,6 +252,7 @@ def run_all(config_path: Path | str, output_root: Path | str | None = None) -> d
     }
     for name, log in named_logs.items():
         _write_log(logs / f"{name}.csv", log)
+    _write_separation_poles(logs / "separation_poles.csv", separation)
 
     _plot_separation(separation, figures / "separation_poles.png")
     _plot_full_state_vs_lqg(full_state, recursive, figures / "full_state_vs_lqg.png")

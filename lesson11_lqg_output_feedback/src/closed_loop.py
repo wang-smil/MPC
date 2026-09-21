@@ -204,9 +204,10 @@ def simulate_lqg(
         logs["load_torque_nm"].append(load)
         controller_modes.append(mode)
 
-        acceleration = (torque_applied + disturbance + load - damping * dq_true) / inertia
-        dq_true += acceleration * dt_s
-        q_true += dq_true * dt_s
+        true_state = np.array([[q_true], [dq_true]])
+        total_input = torque_applied + disturbance + load
+        next_state = design["Ad"] @ true_state + design["Bd"] * total_input
+        q_true, dq_true = (float(next_state[0, 0]), float(next_state[1, 0]))
         previous_applied = torque_applied
 
     output = {name: np.asarray(values) for name, values in logs.items()}
