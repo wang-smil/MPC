@@ -7,7 +7,15 @@ import numpy as np
 
 def _finite_array(value, name: str) -> np.ndarray:
     try:
-        array = np.asarray(value, dtype=float)
+        raw = np.asarray(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{name} must contain real numeric values.") from exc
+    if np.iscomplexobj(raw):
+        raise ValueError(f"{name} must contain real numeric values, not complex values.")
+    if np.issubdtype(raw.dtype, np.bool_):
+        raise ValueError(f"{name} must contain real numeric values, not booleans.")
+    try:
+        array = np.asarray(raw, dtype=float)
     except (TypeError, ValueError) as exc:
         raise ValueError(f"{name} must contain real numeric values.") from exc
     if not np.all(np.isfinite(array)):

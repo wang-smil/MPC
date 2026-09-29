@@ -35,6 +35,22 @@ class MpcModelTest(unittest.TestCase):
         self.assertGreater(np.max(np.abs(model["Ad"] - plant_Ad)), 1e-5)
         self.assertGreater(np.max(np.abs(model["Bd"] - plant_Bd)), 1e-5)
 
+    def test_boolean_model_parameters_are_rejected(self):
+        base_config = load_config(LESSON_DIR / "config" / "mpc.yaml")
+        for section, name in (
+            ("model", "inertia_kg_m2"),
+            ("model", "damping_nm_s_rad"),
+            ("mpc", "dt_s"),
+        ):
+            with self.subTest(parameter=f"{section}.{name}"):
+                config = {
+                    key: dict(value) if isinstance(value, dict) else value
+                    for key, value in base_config.items()
+                }
+                config[section][name] = True
+                with self.assertRaises(ValueError):
+                    build_mpc_model(config)
+
 
 class PredictionMatrixTest(unittest.TestCase):
     def test_seeded_robot_prediction_matches_independent_rollout(self):
@@ -107,6 +123,20 @@ class PredictionMatrixTest(unittest.TestCase):
             with self.subTest(Ad=Ad, Bd=Bd):
                 with self.assertRaises(ValueError):
                     build_prediction_matrices(Ad, Bd, 2)
+
+    def test_complex_and_boolean_arrays_are_rejected(self):
+        valid_A = np.eye(2)
+        valid_B = np.ones((2, 1))
+        complex_A = np.array([[1.0 + 1.0j, 0.0], [0.0, 1.0]])
+        boolean_A = np.array([[True, False], [False, True]])
+        boolean_U = np.array([[True], [False]])
+
+        with self.assertRaises(ValueError):
+            build_prediction_matrices(complex_A, valid_B, 2)
+        with self.assertRaises(ValueError):
+            build_prediction_matrices(boolean_A, valid_B, 2)
+        with self.assertRaises(ValueError):
+            predict_states_matrix(valid_A, valid_B, np.zeros(2), boolean_U)
 
     def test_invalid_initial_state_and_input_sequence_are_rejected(self):
         Ad = np.eye(2)

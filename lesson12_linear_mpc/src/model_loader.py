@@ -23,7 +23,10 @@ def load_config(path: Path | str) -> dict:
 
 def _finite_number(config: dict, section: str, name: str) -> float:
     try:
-        value = float(config[section][name])
+        raw_value = config[section][name]
+        if isinstance(raw_value, (bool, np.bool_)):
+            raise ValueError("boolean is not a numeric model parameter")
+        value = float(raw_value)
     except (KeyError, TypeError, ValueError) as exc:
         raise ValueError(f"Missing or invalid configuration value: {section}.{name}.") from exc
     if not np.isfinite(value):
