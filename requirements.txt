@@ -4,3 +4,5 @@ matplotlib==3.11.1
 control==0.10.2
 jupyter
 PyYAML==6.0.3
+cvxpy==1.9.3
+osqp==1.1.3
