@@ -14,3 +14,37 @@ mpc:
 
 validation:
   seed: 42
+
+experiment_b:
+  duration_s: 2.0
+  seed: 2026
+  target_deg: 30.0
+  horizons: [1, 5, 20]
+
+initial_condition:
+  q_true_deg: 0.0
+  dq_true_rad_s: 0.0
+
+initial_estimate:
+  position_deg: 0.0
+  velocity_rad_s: 0.0
+
+measurement:
+  position_noise_std_deg: 0.05
+
+process_noise:
+  disturbance_torque_std_nm: 0.15
+
+initial_uncertainty:
+  position_std_deg: 5.0
+  velocity_std_rad_s: 1.0
+
+design_limits:
+  max_position_error_deg: 5.0
+  max_velocity_error_rad_s: 1.5
+  max_torque_nm: 3.0
+
+lqr:
+  position_weight_scale: 1.0
+  velocity_weight_scale: 1.0
+  torque_weight_scale: 1.0
