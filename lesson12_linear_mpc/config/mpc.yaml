@@ -21,6 +21,11 @@ experiment_b:
   target_deg: 30.0
   horizons: [1, 5, 20]
 
+experiment_c:
+  torque_limit_nm: 2.0
+  settling_band_deg: 0.6
+  seed: 2026
+
 initial_condition:
   q_true_deg: 0.0
   dq_true_rad_s: 0.0

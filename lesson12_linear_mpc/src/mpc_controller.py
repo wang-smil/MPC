@@ -54,10 +54,18 @@ class LinearMPCController:
         R: np.ndarray,
         P_terminal: np.ndarray,
         horizon: int,
+        torque_bounds: tuple[float, float] | None = None,
     ) -> None:
         self.Ad, self.Bd = _validated_model(Ad, Bd)
         self.horizon = _validated_horizon(horizon)
         self.nx, self.nu = self.Bd.shape
+        if torque_bounds is not None:
+            bounds = _finite_array(torque_bounds, 'torque_bounds')
+            if bounds.shape != (2,) or bounds[0] >= bounds[1]:
+                raise ValueError('torque_bounds must be a finite increasing pair.')
+            self.torque_bounds = (float(bounds[0]), float(bounds[1]))
+        else:
+            self.torque_bounds = None
         self.Q = _validated_weight(Q, "Q", self.nx, positive=False)
         self.R = _validated_weight(R, "R", self.nu, positive=True)
         self.P_terminal = _validated_weight(
@@ -81,6 +89,8 @@ class LinearMPCController:
                 self.X[:, k + 1] == self.Ad @ self.X[:, k] + self.Bd @ self.U[:, k]
             )
         terminal_error = self.X[:, self.horizon] - self.x_ref
+        if self.torque_bounds is not None:
+            constraints.extend((self.U >= self.torque_bounds[0], self.U <= self.torque_bounds[1]))
         cost += cp.sum_squares(P_factor @ terminal_error)
         self.problem = cp.Problem(cp.Minimize(cost), constraints)
 

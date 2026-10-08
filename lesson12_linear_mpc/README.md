@@ -103,3 +103,15 @@ conda run -n robot-control python -m lesson12_linear_mpc.src.run_experiment_b
 代码按职责分为三层：`mpc_controller.py` 建立非 Condensed QP 并返回第一个可执行转矩；`closed_loop.py` 每 1 ms 更新植物、编码器测量和 KF，每 10 ms 更新控制并保持转矩；`run_experiment_b.py` 使用同一组噪声运行四个工况并输出指标。控制器只接收 KF 后验估计 `x_hat`。
 
 本实验的终端权重 `P` 是同一 10 ms 模型的 DARE 解。在无约束条件下，任一上述时域的首个 MPC 转矩都应与 `u=-K(x_hat-x_ref)` 一致，数值测试允许 `1e-4 N·m` 误差。图中的曲线可能重合，这正是该特定理论条件下预期的结果。转矩没有限幅，本实验只是离线仿真，不能把峰值转矩当作硬件可执行命令。
+
+## 实验 C：LQR 外部限幅与 MPC 内部转矩约束
+
+在仓库根目录执行：
+
+```powershell
+conda run -n robot-control python -m lesson12_linear_mpc.src.run_experiment_c
+```
+
+本实验将实际转矩限制在 ±2 N·m。LQR 先计算无约束转矩，再由外部安全层截断；MPC 在 QP 中限制未来每一步转矩，输出后仍保留独立安全限幅。两组沿用实验 B 的模型、Q/R 和 KF，并使用同一组编码器噪声；MPC 预测 20 步。原配置中的 3 N·m 仍只是 Bryson 权重尺度。
+
+结果保存在 `logs/experiment_c.csv`、`figures/constrained_tracking.png` 和 `reports/torque_constrained_mpc.md`。图从上到下是角度、速度、请求与实际转矩。这个简单单输入系统中，两组表现可能接近；实验 D 才加入预测速度约束。
