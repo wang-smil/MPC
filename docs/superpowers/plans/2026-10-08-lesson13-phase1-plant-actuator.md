@@ -4,6 +4,8 @@
 
 **Goal:** 建立可单独运行、经过测试的非理想关节和执行器，为后续MPC实验提供可信输入输出链。
 
+**Execution status (2026-10-08):** Tasks 1–3 complete in e9f1996, 34b655f and d593ec4. RED/GREEN observed; 17 phase1 tests and 117 whole-repository tests passed. Independent reviewer reproduced 17/17 and reported no Critical, Important or Minor issues. Evidence and scope limitations retained in reports/plant_actuator_demo.md.
+
 **Architecture:** 对象拥有位置/速度真值，执行器拥有延迟队列与实际力矩。两者均不知道控制器种类；演示入口用规定的扭矩序列展示实际响应，不提前实现闭环。
 
 **Tech Stack:** Python 3.11、NumPy、SciPy（复用ZOH）、Matplotlib、PyYAML、unittest；Conda robot-control。
