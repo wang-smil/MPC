@@ -1,0 +1,17 @@
+# Phase 1 only. These are teaching assumptions, not measured servo specs.
+nominal_model:
+  inertia: 0.019762
+  damping: 0.080257
+plant:
+  dt_s: 0.001
+  coulomb_friction: 0.12
+  friction_smoothing: 0.02
+  integration: semi_implicit
+actuator:
+  torque_limit_nm: 2.0
+  slew_rate_nm_s: 50.0
+  delay_s: 0.002
+  time_constant_s: 0.005
+demo:
+  duration_s: 0.5
+  control_dt_s: 0.01
