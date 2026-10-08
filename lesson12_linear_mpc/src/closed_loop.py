@@ -88,6 +88,7 @@ def simulate_closed_loop(
     horizon: int | None = None,
     measurement_noise: np.ndarray | None = None,
     torque_limit_nm: float | None = None,
+    velocity_limit_rad_s: float | None = None,
 ) -> dict[str, np.ndarray]:
     """Simulate output feedback; each control event holds one applied torque."""
 
@@ -96,6 +97,8 @@ def simulate_closed_loop(
     design = build_closed_loop_design(config)
     if torque_limit_nm is not None:
         torque_limit_nm = _positive_period(torque_limit_nm, 'torque_limit_nm')
+    if velocity_limit_rad_s is not None:
+        velocity_limit_rad_s = _positive_period(velocity_limit_rad_s, 'velocity_limit_rad_s')
     count = design["sample_count"]
     if mode == "mpc":
         if horizon is None:
@@ -105,6 +108,7 @@ def simulate_closed_loop(
             design["Ad_control"], design["Bd_control"],
             design["Q"], design["R"], design["P_terminal"], horizon,
             torque_bounds=(-torque_limit_nm, torque_limit_nm) if torque_limit_nm is not None else None,
+            velocity_bounds=(-velocity_limit_rad_s, velocity_limit_rad_s) if velocity_limit_rad_s is not None else None,
         )
     else:
         controller = None
@@ -142,6 +146,8 @@ def simulate_closed_loop(
         "q_hat_rad", "dq_hat_rad_s", "q_ref_rad", "dq_ref_rad_s", "torque_request_nm",
         "torque_applied_nm", "control_update", "qp_status", "qp_objective",
         'safety_clip_active', 'torque_constraint_active',
+        'predicted_dq_1_rad_s', 'predicted_dq_N_rad_s',
+        'predicted_velocity_max_abs_rad_s', 'velocity_constraint_active',
         "qp_solve_time_s", "qp_iterations", "innovation_rad", "nis",
     )
     log: dict[str, list] = {name: [] for name in fields}
@@ -162,6 +168,10 @@ def simulate_closed_loop(
         qp_objective = np.nan
         qp_solve_time = np.nan
         qp_iterations = np.nan
+        predicted_dq_1 = np.nan
+        predicted_dq_N = np.nan
+        predicted_velocity_max_abs = np.nan
+        velocity_constraint_active = False
         if control_update:
             torque_constraint_active = False
             if mode == "lqr":
@@ -179,6 +189,14 @@ def simulate_closed_loop(
                 torque_constraint_active = bool(
                     torque_limit_nm is not None
                     and np.any(np.abs(result['U']) >= torque_limit_nm - 1e-5)
+                )
+                planned_velocities = np.asarray(result['X'][1, 1:], dtype=float)
+                predicted_dq_1 = float(planned_velocities[0])
+                predicted_dq_N = float(planned_velocities[-1])
+                predicted_velocity_max_abs = float(np.max(np.abs(planned_velocities)))
+                velocity_constraint_active = bool(
+                    velocity_limit_rad_s is not None
+                    and predicted_velocity_max_abs >= velocity_limit_rad_s - 1e-5
                 )
                 qp_objective = float(result["objective"])
                 if result["solve_time_s"] is not None:
@@ -204,6 +222,10 @@ def simulate_closed_loop(
             "torque_applied_nm": applied_torque,
             'safety_clip_active': safety_clip_active,
             'torque_constraint_active': torque_constraint_active,
+            'predicted_dq_1_rad_s': predicted_dq_1,
+            'predicted_dq_N_rad_s': predicted_dq_N,
+            'predicted_velocity_max_abs_rad_s': predicted_velocity_max_abs,
+            'velocity_constraint_active': velocity_constraint_active,
             "control_update": control_update,
             "qp_status": qp_status,
             "qp_objective": qp_objective,

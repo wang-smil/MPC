@@ -115,3 +115,15 @@ conda run -n robot-control python -m lesson12_linear_mpc.src.run_experiment_c
 本实验将实际转矩限制在 ±2 N·m。LQR 先计算无约束转矩，再由外部安全层截断；MPC 在 QP 中限制未来每一步转矩，输出后仍保留独立安全限幅。两组沿用实验 B 的模型、Q/R 和 KF，并使用同一组编码器噪声；MPC 预测 20 步。原配置中的 3 N·m 仍只是 Bryson 权重尺度。
 
 结果保存在 `logs/experiment_c.csv`、`figures/constrained_tracking.png` 和 `reports/torque_constrained_mpc.md`。图从上到下是角度、速度、请求与实际转矩。这个简单单输入系统中，两组表现可能接近；实验 D 才加入预测速度约束。
+
+## 实验 D：预测速度约束
+
+在仓库根目录执行：
+
+```powershell
+conda run -n robot-control python -m lesson12_linear_mpc.src.run_experiment_d
+```
+
+两组都沿用 ±2 N·m 转矩上限。LQR 不知道未来速度界；MPC 在预测的 `x1` 至 `xN` 中加入 ±1.5 rad/s 速度约束，含终点但不限制当前已发生的 `x0`。测试会检查整段预测速度而不是只检查最终一步。
+
+图在 `figures/velocity_constraint.png`，报告在 `reports/velocity_constrained_mpc.md`，逐毫秒日志在 `logs/experiment_d.csv`。注意区分模型预测速度与仿真真实速度：前者满足约束也不保证后者绝对不超限。

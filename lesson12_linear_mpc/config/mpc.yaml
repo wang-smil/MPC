@@ -26,6 +26,10 @@ experiment_c:
   settling_band_deg: 0.6
   seed: 2026
 
+experiment_d:
+  velocity_limit_rad_s: 1.5
+  seed: 2026
+
 initial_condition:
   q_true_deg: 0.0
   dq_true_rad_s: 0.0

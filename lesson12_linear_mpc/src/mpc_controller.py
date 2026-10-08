@@ -1,4 +1,4 @@
-"""Non-condensed, unconstrained finite-horizon MPC solved with CVXPY/OSQP.
+"""Non-condensed finite-horizon MPC solved with CVXPY/OSQP.
 
 Both state and input trajectories are decision variables. Only ``u0`` from
 the returned plan is intended to be applied before the next measurement.
@@ -55,6 +55,7 @@ class LinearMPCController:
         P_terminal: np.ndarray,
         horizon: int,
         torque_bounds: tuple[float, float] | None = None,
+        velocity_bounds: tuple[float, float] | None = None,
     ) -> None:
         self.Ad, self.Bd = _validated_model(Ad, Bd)
         self.horizon = _validated_horizon(horizon)
@@ -66,6 +67,13 @@ class LinearMPCController:
             self.torque_bounds = (float(bounds[0]), float(bounds[1]))
         else:
             self.torque_bounds = None
+        if velocity_bounds is not None:
+            bounds = _finite_array(velocity_bounds, 'velocity_bounds')
+            if self.nx < 2 or bounds.shape != (2,) or bounds[0] >= bounds[1]:
+                raise ValueError('velocity_bounds require a velocity state and a finite increasing pair.')
+            self.velocity_bounds = (float(bounds[0]), float(bounds[1]))
+        else:
+            self.velocity_bounds = None
         self.Q = _validated_weight(Q, "Q", self.nx, positive=False)
         self.R = _validated_weight(R, "R", self.nu, positive=True)
         self.P_terminal = _validated_weight(
@@ -91,6 +99,11 @@ class LinearMPCController:
         terminal_error = self.X[:, self.horizon] - self.x_ref
         if self.torque_bounds is not None:
             constraints.extend((self.U >= self.torque_bounds[0], self.U <= self.torque_bounds[1]))
+        if self.velocity_bounds is not None:
+            constraints.extend((
+                self.X[1, 1:] >= self.velocity_bounds[0],
+                self.X[1, 1:] <= self.velocity_bounds[1],
+            ))
         cost += cp.sum_squares(P_factor @ terminal_error)
         self.problem = cp.Problem(cp.Minimize(cost), constraints)
 
@@ -142,6 +155,27 @@ class LinearMPCController:
         if not np.all(np.isfinite(X)) or not np.all(np.isfinite(U)):
             result["status"] = "invalid_solution"
             result["error"] = "OSQP returned non-finite decision variables."
+            return result
+        tolerance = 1e-5
+        violations = []
+        if np.max(np.abs(X[:, 0] - self.x0.value)) > tolerance:
+            violations.append('initial state')
+        predicted_next = self.Ad @ X[:, :-1] + self.Bd @ U
+        if np.max(np.abs(X[:, 1:] - predicted_next)) > tolerance:
+            violations.append('dynamics')
+        if self.torque_bounds is not None and (
+            np.any(U < self.torque_bounds[0] - tolerance)
+            or np.any(U > self.torque_bounds[1] + tolerance)
+        ):
+            violations.append('torque bounds')
+        if self.velocity_bounds is not None and (
+            np.any(X[1, 1:] < self.velocity_bounds[0] - tolerance)
+            or np.any(X[1, 1:] > self.velocity_bounds[1] + tolerance)
+        ):
+            violations.append('velocity bounds')
+        if violations or not np.isfinite(self.problem.value):
+            result['status'] = 'invalid_solution'
+            result['error'] = 'OSQP plan violates ' + ', '.join(violations or ['finite objective'])
             return result
         result["X"] = X.copy()
         result["U"] = U.copy()
