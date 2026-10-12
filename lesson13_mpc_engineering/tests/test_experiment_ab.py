@@ -33,6 +33,19 @@ class ExperimentABTest(unittest.TestCase):
             self.assertEqual(summary['config']['actuator']['torque_limit_nm'], 2)
             self.assertTrue(summary['versions']['cvxpy'])
 
+    def test_runner_exports_safety_stop_endpoint(self):
+        config = ab_config(.04)
+        config['initial_condition'] = {'q_true_deg': 59., 'dq_true_rad_s': 100.}
+        config['initial_estimate'] = {'position_deg': 59., 'velocity_rad_s': 0.}
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            run_experiments(config, root)
+            summary = json.loads((root / 'logs/experiment_ab_summary.json').read_text(encoding='utf-8'))
+            for case in summary['cases'].values():
+                self.assertEqual(case['status'], 'safety_stop')
+                self.assertGreater(case['final_state']['position_rad'], np.deg2rad(60.))
+                self.assertAlmostEqual(case['final_state']['time_s'], .001)
+
     def test_summary_and_csv_reconcile(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

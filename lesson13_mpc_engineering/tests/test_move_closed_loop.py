@@ -84,6 +84,18 @@ class MoveClosedLoopTest(unittest.TestCase):
         self.assertEqual(len(result['plans']), 0)
         self.assertTrue(np.isnan(result['log']['torque_actual_nm'][0]))
 
+    def test_post_step_safety_stop_preserves_endpoint(self):
+        config = ab_config()
+        config['initial_condition'] = {'q_true_deg': 59., 'dq_true_rad_s': 100.}
+        config['initial_estimate'] = {'position_deg': 59., 'velocity_rad_s': 0.}
+        result = simulate_closed_loop(config, input_rate_weight=.5, hard_rate=True,
+                                      measurement_noise=np.zeros(100))
+        self.assertEqual(result['status'], 'safety_stop')
+        self.assertEqual(len(result['log']['time_s']), 1)
+        self.assertLess(result['log']['q_true_rad'][-1], np.deg2rad(60.))
+        self.assertGreater(result['final_state'][0], np.deg2rad(60.))
+        self.assertAlmostEqual(result['final_state_time_s'], .001)
+
     def test_invalid_periods_and_noise(self):
         for section, name, value in (('mpc', 'dt_s', .0105), ('experiment_ab', 'duration_s', .1005),
                                      ('mpc', 'dt_s', True), ('measurement', 'position_noise_std_deg', np.nan)):

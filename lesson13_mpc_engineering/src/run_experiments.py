@@ -49,7 +49,8 @@ def _plots(results, config, directory):
                 if group == 'b':
                     ax[3].plot(log['time_s'][mask], log['qp_first_delta_nm'][mask], color=color,
                                ls=':', alpha=.8)
-        last_time = max(float(result['log']['time_s'][-1]) for result in results.values())
+        last_time = max(config['plant']['dt_s'],
+                        max(float(result['log']['time_s'][-1]) for result in results.values()))
         target = config['experiment_ab']['target_deg']
         delta = config['actuator']['slew_rate_nm_s'] * config['mpc']['dt_s']
         for column in range(2):
@@ -107,7 +108,7 @@ def _write_report(summary, root):
              'request_delta是相邻两次请求之差；QP首步delta是本次请求减当前反馈；有执行器滞后时两者不等。B的±0.5边界严格用于QP的DU，而不是机械套用到相邻请求差。',
              'RMS request_delta只统计控制事件，并包含首步相对初始输入；实际变化率按1 ms物理区间计算。所有组都有外部保护，实际平滑不能单独证明规划约束生效。',
              '比较A时同时看跟踪RMSE和请求delta，不能提前认定S增大后所有指标都单调改善。比较B时检查计划NPZ中全部DU和保护修正次数，而不只看实际扭矩。',
-             '计时包括首轮编译开销；墙钟和求解器内部计时分列在JSON中，未实施超预算切换，因此不是实时保证。失败组保留部分日志且明确标记，不能当作完整实验。', '',
+             '计时包括首轮编译开销；墙钟和求解器内部计时分列在JSON中，未实施超预算切换，因此不是实时保证。失败组保留部分日志且明确标记，不能当作完整实验。JSON的final_state另存最终物理状态及其时刻：若步进后越界，该状态不在区间起点CSV中，不能忽略。', '',
              '## 核心代码入口', '',
              '`mpc_controller.py`扩展旧课QP；`closed_loop.py`负责过去输入/KF/控制/执行器的因果时序；`constraint_manager.py`仅负责外部命令保护；`metrics.py`区分两种采样率。', '',
              '后续C/D/E研究软约束和不可行；F/G才实现计算预算与fallback。']
@@ -149,6 +150,9 @@ def run_experiments(config: dict, output_dir: Path) -> dict:
                             **{field: np.array([plan[field] for plan in plans]) for field in ('X', 'U', 'DU')})
         summary['cases'][name] = {'S': float(weight), 'hard_rate': hard_rate, 'status': result['status'],
                                   'failure_reason': result['failure_reason'], 'csv': csv_relative,
+                                  'final_state': {'time_s': float(result['final_state_time_s']),
+                                                  'position_rad': float(result['final_state'][0]),
+                                                  'velocity_rad_s': float(result['final_state'][1])},
                                   'plans': plan_relative, 'expected_samples': result['expected_samples'],
                                   'metrics': calculate_metrics(log, config['mpc']['dt_s'])}
     (root / 'logs/experiment_ab_summary.json').write_text(json.dumps(summary, indent=2, ensure_ascii=False,

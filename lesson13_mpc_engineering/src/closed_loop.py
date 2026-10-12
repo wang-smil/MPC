@@ -67,6 +67,7 @@ def simulate_closed_loop(config: dict, *, input_rate_weight: float, hard_rate: b
     rows, plans = [], []
     request = command = actuator.torque_actual_nm
     status, failure = 'complete', None
+    state_time = 0.
     for index in range(count):
         time = index * dt
         q, velocity = plant.state
@@ -114,9 +115,11 @@ def simulate_closed_loop(config: dict, *, input_rate_weight: float, hard_rate: b
                    torque_actual_nm=output['torque_actual_nm'], delta_actual_nm=output['delta_actual_nm'])
         rows.append(row)
         next_state = plant.step(output['torque_actual_nm'])
+        state_time = (index + 1) * dt
         if abs(next_state[0]) > position_bound:
             status, failure = 'safety_stop', f'Position boundary exceeded at t={time + dt:.6f}'
             break
     log = {key: np.array([row[key] for row in rows]) for key in fields}
     return {'status': status, 'log': log, 'plans': plans, 'failure_reason': failure,
-            'expected_samples': count, 'final_state': plant.state}
+            'expected_samples': count, 'final_state': plant.state,
+            'final_state_time_s': state_time}
