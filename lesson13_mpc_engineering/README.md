@@ -1,6 +1,24 @@
 # 第13课：MPC工程化
 
-当前只完成第一阶段：非理想关节、执行器及开环演示。MPC变化量、软约束和fallback尚未实现；不要把此演示当成第13课完整验收。
+当前完成第一阶段非理想关节/执行器，以及第二阶段实验A/B：MPC变化量惩罚与硬变化量约束。软约束、不可行处理、计算预算和fallback尚未实现；不是第13课完整验收。
+
+## 实验A/B
+
+在项目根目录运行：
+
+```powershell
+conda run -n robot-control python -m lesson13_mpc_engineering.src.run_experiments --experiment ab
+```
+
+先看 [实验报告](reports/input_move_report.md)。A比较S=0、0.5、5；B固定S=0.5，比较是否把变化量边界放入QP。所有组使用同一编码器噪声、KF、执行器和外部保护。
+
+核心文件：`mpc_controller.py`扩展第12课QP；`model_loader.py`复用离散模型/LQR/KF参数；`closed_loop.py`执行闭环；`constraint_manager.py`进行独立命令保护；`metrics.py`计算指标；`run_experiments.py`导出图、CSV、计划NPZ及报告。
+
+控制每10 ms更新，物理对象/KF每1 ms更新。QP首步变化量为“本次请求－当前实际扭矩反馈”，后续为相邻规划输入之差。它不同于相邻两次控制请求之差。硬边界为±0.5 N·m；执行器实际变化率上限50 N·m/s，幅值±2 N·m。
+
+控制器只使用带噪位置经KF得到的状态估计；真值仅供仿真推进、指标和越界监测。预测模型尚未包含摩擦、延迟和一阶滞后，不能把预测约束当作实机安全保证。本阶段未启用速度约束。
+
+## 第一阶段开环演示
 
 在 `D:\MPC_learn` 的终端执行：
 
@@ -15,7 +33,7 @@ conda run -n robot-control python -m lesson13_mpc_engineering.src.run_plant_actu
 - `plant.py`：真实对象的仿真替身，计算摩擦、加速度，然后更新速度和位置。非线性模式使用半隐式欧拉；线性匹配基准可用第8课精确ZOH。
 - `actuator.py`：命令延迟FIFO、一阶扭矩响应、实际幅值和变化率限制。它不是MPC，也不是电流环的完整模型。
 - `run_plant_actuator_demo.py`：给定开环扭矩、进行命令保护、依次推进执行器和对象并保存数据。
-- `config/mpc_engineering.yaml`：第一阶段配置。数值是教学假设，不是已辨识舵机规格。
+- `config/mpc_engineering.yaml`：开环与A/B配置。数值是教学假设，不是已辨识舵机规格。
 - `tests/`：核对物理公式、延迟边界、输入有效性与日志因果时序。
 
 对象方程：
@@ -46,4 +64,4 @@ CSV一行对应区间 `[t_k,t_k+1ms)`：q/dq是区间开始的状态，actual_to
 conda run -n robot-control python -m unittest discover -s lesson13_mpc_engineering/tests -t . -v
 ```
 
-下一阶段才比较MPC的变化量惩罚和hard rate constraint，随后完成课程A–G及非理想综合验收。当前仿真不代表安全认证或硬实时保证。
+后续完成C–G：软约束、不可行案例、计算预算、fallback及非理想综合验收。当前仿真不代表安全认证或硬实时保证。
