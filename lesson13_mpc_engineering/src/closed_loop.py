@@ -1,4 +1,4 @@
-"""Causal KF/MPC feedback around the nonideal plant; no fallback yet in phase 2."""
+"""Causal KF/MPC feedback around the nonideal plant; fallback is still pending."""
 
 from numbers import Integral
 from time import perf_counter
@@ -15,7 +15,8 @@ from .plant import JointPlant
 
 
 def simulate_closed_loop(config: dict, *, input_rate_weight: float, hard_rate: bool,
-                         measurement_noise=None) -> dict:
+                         measurement_noise=None, velocity_mode='off', velocity_bounds=None,
+                         include_current_velocity=False, slack_weight=1e4) -> dict:
     dt = bounded_scalar(config['plant']['dt_s'], 'plant.dt_s', positive=True)
     control_dt = bounded_scalar(config['mpc']['dt_s'], 'mpc.dt_s', positive=True)
     duration = bounded_scalar(config['experiment_ab']['duration_s'], 'duration_s', positive=True)
@@ -39,7 +40,9 @@ def simulate_closed_loop(config: dict, *, input_rate_weight: float, hard_rate: b
                                          input_rate_weight=input_rate_weight,
                                          torque_bounds=(-actuator.torque_limit_nm, actuator.torque_limit_nm),
                                          delta_bounds=(-rate_delta, rate_delta) if hard_rate else None,
-                                         position_bounds=(-position_bound, position_bound))
+                                         position_bounds=(-position_bound, position_bound),
+                                         velocity_mode=velocity_mode, velocity_bounds=velocity_bounds,
+                                         include_current_velocity=include_current_velocity, slack_weight=slack_weight)
     seed = config['experiment_ab']['seed']
     if isinstance(seed, (bool, np.bool_)) or not isinstance(seed, Integral) or seed < 0:
         raise ValueError('seed must be a nonnegative integer.')
@@ -63,7 +66,8 @@ def simulate_closed_loop(config: dict, *, input_rate_weight: float, hard_rate: b
               'torque_command_nm', 'torque_actual_nm', 'delta_actual_nm', 'control_update',
               'feedback_prev_nm', 'solver_status', 'solver_iterations', 'solver_solve_time_s',
               'solver_wall_time_s', 'request_delta_nm', 'qp_first_delta_nm', 'command_delta_nm',
-              'max_planned_delta_nm', 'guard_modified')
+              'max_planned_delta_nm', 'guard_modified',
+              'qp_initial_slack_rad_s', 'max_predicted_slack_rad_s')
     rows, plans = [], []
     request = command = actuator.torque_actual_nm
     status, failure = 'complete', None
@@ -108,8 +112,13 @@ def simulate_closed_loop(config: dict, *, input_rate_weight: float, hard_rate: b
                        qp_first_delta_nm=request - feedback, command_delta_nm=command - previous_command,
                        max_planned_delta_nm=float(np.max(np.abs(result['DU']))),
                        guard_modified=abs(request - command) > 1e-5)
+            if result['EPS'] is not None:
+                row['max_predicted_slack_rad_s'] = float(np.max(result['EPS']))
+                if controller.velocity_indices[0] == 0:
+                    row['qp_initial_slack_rad_s'] = float(result['EPS'][0, 0])
             plans.append({'time_s': time, 'u_prev': feedback,
-                          'X': result['X'], 'U': result['U'], 'DU': result['DU']})
+                          'X': result['X'], 'U': result['U'], 'DU': result['DU'],
+                          'EPS': result['EPS'], 'velocity_indices': controller.velocity_indices})
         output = actuator.step(command)
         row.update(torque_request_nm=request, torque_command_nm=command,
                    torque_actual_nm=output['torque_actual_nm'], delta_actual_nm=output['delta_actual_nm'])
