@@ -119,6 +119,51 @@ class ManagedTimingTest(unittest.TestCase):
         self.assertTrue(job['deadline_missed'], 'Terminal time 11 ms is already beyond the 10 ms deadline')
         self.assertEqual(result['final_state_time_s'], .011)
 
+    def test_invalid_estimate_stops_before_same_tick_candidate_completion(self):
+        original = DiscreteKalmanFilter.update
+        for invalid in ([np.nan, 0.], [np.inf, 0.], [0.], [[0.], [0.]], [True, 0.]):
+            calls = 0
+
+            def corrupt(kf, measurement):
+                nonlocal calls
+                result = original(kf, measurement)
+                calls += 1
+                if calls == 3:
+                    result['x_hat'] = invalid
+                return result
+
+            with self.subTest(invalid=invalid), patch('lesson13_mpc_engineering.src.managed_closed_loop.DiscreteKalmanFilter.update', new=corrupt):
+                result = simulate_managed_closed_loop(fg_config(.01))
+            self.assertEqual(result['status'], 'safety_stop')
+            self.assertIn('estimate', result['failure_reason'])
+            self.assertEqual(len(result['log']['time_s']), 3)
+            self.assertAlmostEqual(result['final_state_time_s'], .002)
+            self.assertTrue(np.isnan(result['log']['torque_actual_nm'][-1]))
+            self.assertFalse(result['jobs'][0]['executed'])
+            self.assertFalse(result['jobs'][0]['completed'])
+            self.assertFalse(any(e['time_s'] == .002 and e.get('selected_source') == 'mpc' for e in result['events']))
+
+    def test_estimator_exceptions_preserve_partial_results(self):
+        for method in ('update', 'predict'):
+            original = getattr(DiscreteKalmanFilter, method)
+            calls = 0
+
+            def fail(kf, value):
+                nonlocal calls
+                calls += 1
+                if calls == (4 if method == 'update' else 3):
+                    raise ValueError('posterior covariance failure')
+                return original(kf, value)
+
+            with self.subTest(method=method), patch(f'lesson13_mpc_engineering.src.managed_closed_loop.DiscreteKalmanFilter.{method}', new=fail):
+                result = simulate_managed_closed_loop(fg_config(.01))
+            self.assertEqual(result['status'], 'safety_stop')
+            self.assertIn('posterior covariance failure', result['failure_reason'])
+            self.assertEqual(len(result['log']['time_s']), 4)
+            self.assertAlmostEqual(result['final_state_time_s'], .003)
+            self.assertTrue(np.isnan(result['log']['torque_actual_nm'][-1]))
+            self.assertTrue(result['jobs'][0]['executed'])
+
 
 if __name__ == '__main__':
     unittest.main()

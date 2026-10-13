@@ -184,6 +184,30 @@ class RuntimeExperimentsTest(unittest.TestCase):
         self.assertAlmostEqual(metrics['actual_overspeed_peak_rad_s'], 8.5)
         self.assertEqual(metrics['position_violation_observation_count'], 1)
 
+    def test_negative_reference_remains_visible_in_shared_position_axes(self):
+        from lesson13_mpc_engineering.src import runtime_artifacts
+        config = fg_config(.01)
+        config['experiment_fg']['target_deg'] = -30.
+        config['experiment_fg']['replay_samples'] = 2
+        config['experiment_fg']['fault_scenarios'] = {name: {} for name in
+            ('g_nominal', 'g_iteration_limit', 'g_deadline', 'g_error_recovery')}
+        original, captured = runtime_artifacts.plt.subplots, []
+
+        def capture(*args, **kwargs):
+            figure, axes = original(*args, **kwargs)
+            if args[:2] == (4, 3):
+                captured.append(axes)
+            return figure, axes
+
+        with tempfile.TemporaryDirectory() as temporary, patch.object(runtime_artifacts.plt, 'subplots', side_effect=capture):
+            run_runtime_experiments(config, Path(temporary))
+        self.assertEqual(len(captured), 1)
+        limits = [axis.get_ylim() for axis in captured[0][:, 0]]
+        for lower, upper in limits:
+            self.assertLessEqual(lower, -30.)
+            self.assertGreaterEqual(upper, 0.)
+        self.assertTrue(all(pair == limits[0] for pair in limits))
+
 
 if __name__ == '__main__':
     unittest.main()

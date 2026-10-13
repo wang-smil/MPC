@@ -94,7 +94,11 @@ def _plots(summary, benchmark, results, root):
 
         names = ['g_nominal', 'g_iteration_limit', 'g_deadline', 'g_error_recovery']
         fig, axes = plt.subplots(4, 3, figsize=(16, 13), layout='constrained')
-        position_top = max(33., max(float(np.nanmax(np.rad2deg(results[name]['log']['q_true_rad']))) for name in names) + 2.)
+        positions = np.concatenate([np.rad2deg(np.r_[results[name]['log']['q_true_rad'],
+                                                     results[name]['log']['q_ref_rad']]) for name in names])
+        positions = positions[np.isfinite(positions)]
+        position_bottom = min(-2., float(np.min(positions)) - 2.) if positions.size else -2.
+        position_top = max(2., float(np.max(positions)) + 2.) if positions.size else 2.
         for row_index, name in enumerate(names):
             result, case = results[name], summary['cases'][name]
             log = result['log']
@@ -107,7 +111,7 @@ def _plots(summary, benchmark, results, root):
                 stop = min(summary['config']['experiment_fg']['duration_s'], max(stop, max(transitions) + .01))
             axes[row_index, 0].plot(time, np.rad2deg(log['q_true_rad']), color='#2267A7', label='True position')
             axes[row_index, 0].plot(time, np.rad2deg(log['q_ref_rad']), color='#555555', ls='--', label='Reference')
-            axes[row_index, 0].set(title=f'{name}: full trajectory', ylabel='Position / deg', xlim=(0, summary['config']['experiment_fg']['duration_s']), ylim=(-2, position_top))
+            axes[row_index, 0].set(title=f'{name}: full trajectory', ylabel='Position / deg', xlim=(0, summary['config']['experiment_fg']['duration_s']), ylim=(position_bottom, position_top))
             axes[row_index, 1].plot(time, log['torque_command_nm'], color='#C57920', ls='--', label='Guarded command')
             axes[row_index, 1].plot(time, log['torque_actual_nm'], color='#2267A7', label='Actual torque')
             limit = summary['config']['actuator']['torque_limit_nm']

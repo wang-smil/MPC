@@ -15,7 +15,7 @@ from .actuator import TorqueActuator
 from .constraint_manager import guard_command
 from .fallback_controller import LqrFallbackController
 from .model_loader import build_design
-from .mpc_controller import EngineeringMPCController
+from .mpc_controller import EngineeringMPCController, finite_vector
 from .plant import JointPlant
 from .qp_solver import SolverSettings
 from .solver_monitor import assess_result, SolverMonitor
@@ -113,14 +113,12 @@ def simulate_managed_closed_loop(config: dict, *, timing_mode='injected', faults
         time = index * dt
         q, speed = plant.state
         feedback = actuator.torque_actual_nm
-        if index:
-            kf.predict(feedback)
         measurement = q + noise[index]
-        estimate = kf.update(measurement)['x_hat']
         row = dict.fromkeys(fields, np.nan)
-        row.update(time_s=time, q_true_rad=q, dq_true_rad_s=speed, q_hat_rad=estimate[0], dq_hat_rad_s=estimate[1],
-                   q_measured_rad=measurement, measurement_noise_rad=noise[index], q_ref_rad=reference[0],
-                   control_update=index % stride == 0, feedback_prev_nm=feedback, solver_status='')
+        row.update(time_s=time, q_true_rad=q, dq_true_rad_s=speed, q_measured_rad=measurement,
+                   measurement_noise_rad=noise[index], q_ref_rad=reference[0],
+                   control_update=index % stride == 0, feedback_prev_nm=feedback, solver_status='',
+                   mode=monitor.mode, selected_source=source, good_count=monitor.good_count)
         tick_events = []
         command_before_tick = command
 
@@ -180,6 +178,15 @@ def simulate_managed_closed_loop(config: dict, *, timing_mode='injected', faults
                 status, failure = 'safety_stop', f'Position boundary exceeded at t={time:.6f}'
                 rows.append(row)
                 break
+            # Validate every physical-tick estimate BEFORE completing an old plan.
+            # A non-submission tick can still issue a completion/fallback command.
+            if index:
+                kf.predict(feedback)
+            posterior = kf.update(measurement)
+            if not isinstance(posterior, dict) or 'x_hat' not in posterior:
+                raise ValueError('Estimator output must contain estimate x_hat.')
+            estimate = finite_vector(posterior['x_hat'], 2, 'estimate')
+            row.update(q_hat_rad=estimate[0], dq_hat_rad_s=estimate[1])
             # Complete old work before budget checks or a same-tick new control trigger.
             if pending is not None:
                 if index - pending['_start_index'] > stride:
@@ -243,7 +250,7 @@ def simulate_managed_closed_loop(config: dict, *, timing_mode='injected', faults
                         complete(pending)
                         pending = None
         except (ValueError, FloatingPointError) as exc:
-            status, failure = 'safety_stop', f'Invalid control state/request at t={time:.6f}: {exc}'
+            status, failure = 'safety_stop', f'Invalid estimator/control state/request at t={time:.6f}: {exc}'
             row.update(torque_request_nm=np.nan, torque_command_nm=np.nan, decision_event='|'.join(tick_events))
             rows.append(row)
             break
