@@ -164,11 +164,22 @@ def run_experiments(config: dict, output_dir: Path) -> dict:
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--experiment', choices=['ab', 'cde'], default='ab')
+    parser.add_argument('--experiment', choices=['ab', 'cde', 'fg'], default='ab')
     parser.add_argument('--config', type=Path)
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
     config = load_config(args.config or root / 'config/mpc_engineering.yaml')
+    if args.experiment == 'fg':
+        from .run_runtime import run_runtime_experiments
+        summary = run_runtime_experiments(config, root)
+        for mode, groups in summary['benchmark']['metrics'].items():
+            m = groups['steady']
+            print(f"F {mode}: steady p95={m['wall_p95_ms']} ms, budget_miss={m['budget_miss_count']}/{m['count']}")
+        for name, case in summary['cases'].items():
+            m = case['metrics']
+            print(f"{name}: {case['status']}, budget_miss={m['budget_miss_count']}, deadline_miss={m['deadline_miss_count']}, fallback/recovery={m['fallback_entry_count']}/{m['recovery_count']}")
+        print(f'report: {root / "reports/runtime_fallback_report.md"}')
+        return
     if args.experiment == 'cde':
         from .run_feasibility import run_feasibility_experiments
         summary = run_feasibility_experiments(config, root)

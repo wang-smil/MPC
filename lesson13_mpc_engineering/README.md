@@ -1,6 +1,23 @@
 # 第13课：MPC工程化
 
-当前覆盖非理想关节/执行器、A/B输入变化量，以及C/D/E可行性与速度松弛量。F/G计算预算、fallback和综合验收尚未实现；不是第13课完整验收。
+当前覆盖非理想关节/执行器、A/B输入变化量、C/D/E可行性与速度松弛量，以及F/G求解预算和fallback。综合多seed/多控制器全场景验收仍待后续，不把F/G当作综合验收。
+
+## 实验F/G
+
+```powershell
+conda run -n robot-control python -m lesson13_mpc_engineering.src.run_experiments --experiment fg
+```
+
+看 [求解时间与降级报告](reports/runtime_fallback_report.md) 和 [验收记录](reports/phase4_verification.md)。
+
+- F冻结200组参数，warm on/off各重复3轮，区分首次编译/冷启动和后续调用；记录真实墙钟mean/p95/p99/max，保留慢样本和失败。5 ms预算不等于10 ms控制截止。不要并行运行其他性能测试。
+- G实际调用QP，但完成事件延迟是明确注入的2/7/12 ms，不冒充墙钟。5 ms无结果就选fresh LQR，迟到计划丢弃；worker仍忙就不提交新QP。连续3次有效及时结果才恢复MPC。
+- `f_measured_sync`只能在Python阻塞返回后发现超时，不提供“5 ms准时切换”的物理保证。G演示该时序策略，也不是真正异步可抢占求解器。
+- 每组共享同一编码器噪声。输出physical CSV、jobs JSON、events CSV、候选plans NPZ与summary，能逐个作业核对提交、过期、丢弃和恢复；`executed`表示请求被选择，之后仍经过共同保护。
+
+核心文件：`qp_solver.py`负责本轮原始诊断；`solver_monitor.py`分类预算/结果并管理恢复；`fallback_controller.py`只用KF估计计算备用LQR；`managed_closed_loop.py`实现事件顺序和共同保护；`runtime_metrics.py`区分作业/控制周期/物理样本分母；`run_runtime.py`运行F/G，`runtime_artifacts.py`导出图与报告。
+
+F/G的S=0.5、rho=10000、速度未来软边界±1.5 rad/s。变化率保护按每次命令事件的实际间隔计算；实际执行器仍每1 ms限速。默认故障表见生成报告；若缩短仿真，请在`experiment_fg.fault_scenarios`显式提供四组的合法周期索引，程序不会悄悄忽略越界故障。
 
 ## 实验C/D/E
 
@@ -45,7 +62,7 @@ conda run -n robot-control python -m lesson13_mpc_engineering.src.run_plant_actu
 - `plant.py`：真实对象的仿真替身，计算摩擦、加速度，然后更新速度和位置。非线性模式使用半隐式欧拉；线性匹配基准可用第8课精确ZOH。
 - `actuator.py`：命令延迟FIFO、一阶扭矩响应、实际幅值和变化率限制。它不是MPC，也不是电流环的完整模型。
 - `run_plant_actuator_demo.py`：给定开环扭矩、进行命令保护、依次推进执行器和对象并保存数据。
-- `config/mpc_engineering.yaml`：开环与A/B配置。数值是教学假设，不是已辨识舵机规格。
+- `config/mpc_engineering.yaml`：开环与A–G配置。数值是教学假设，不是已辨识舵机规格。
 - `tests/`：核对物理公式、延迟边界、输入有效性与日志因果时序。
 
 对象方程：
@@ -76,4 +93,4 @@ CSV一行对应区间 `[t_k,t_k+1ms)`：q/dq是区间开始的状态，actual_to
 conda run -n robot-control python -m unittest discover -s lesson13_mpc_engineering/tests -t . -v
 ```
 
-后续完成F/G：计算预算、fallback及非理想综合验收。当前仿真不代表安全认证或硬实时保证。
+后续完成非理想综合验收。当前fallback、位置监测和仿真均不代表硬件安全认证或硬实时保证。

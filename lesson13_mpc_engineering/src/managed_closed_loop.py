@@ -29,10 +29,10 @@ def build_managed_controller(config, settings=None):
     torque = bounded_scalar(config['actuator']['torque_limit_nm'], 'torque_limit_nm', positive=True)
     delta = bounded_scalar(config['actuator']['slew_rate_nm_s'], 'slew_rate_nm_s', positive=True) * config['mpc']['dt_s']
     controller = EngineeringMPCController(design['Ad'], design['Bd'], design['Q'], design['R'], design['P'],
-                                          config['mpc']['horizon_steps'], input_rate_weight=.5,
+                                          config['mpc']['horizon_steps'], input_rate_weight=config['experiment_fg'].get('input_rate_weight', .5),
                                           torque_bounds=(-torque, torque), delta_bounds=(-delta, delta),
                                           position_bounds=(-np.deg2rad(limit), np.deg2rad(limit)),
-                                          velocity_mode='soft', velocity_bounds=(-speed, speed), slack_weight=1e4,
+                                          velocity_mode='soft', velocity_bounds=(-speed, speed), slack_weight=config['experiment_fg'].get('slack_weight', 1e4),
                                           solver_settings=settings)
     return controller, design
 
@@ -259,6 +259,12 @@ def simulate_managed_closed_loop(config: dict, *, timing_mode='injected', faults
         if abs(next_state[0]) > position_limit:
             status, failure = 'safety_stop', f'Position boundary exceeded at t={state_time:.6f}'
             break
+    # A final physical interval can cross a pending job's deadline without another
+    # sampled tick. Preserve that observed overrun, but never invent completion.
+    terminal_index = int(round(state_time / dt))
+    for job in jobs:
+        if not job['completed'] and terminal_index - job['_start_index'] > stride:
+            job['deadline_missed'] = True
     # Private computed snapshots are not an API for executing a stale plan.
     public_jobs = [{key: value for key, value in job.items() if not key.startswith('_')} for job in jobs]
     return {'status': status, 'failure_reason': failure, 'timing_mode': timing_mode,

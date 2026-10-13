@@ -111,6 +111,14 @@ class ManagedTimingTest(unittest.TestCase):
             with self.assertRaises(ValueError):
                 simulate_managed_closed_loop(fg_config(), faults=faults)
 
+    def test_terminal_pending_job_keeps_observed_deadline_overrun(self):
+        result = simulate_managed_closed_loop(fg_config(.011), faults={0: {'kind': 'delay', 'completion_s': .020}})
+        job = result['jobs'][0]
+        self.assertFalse(job['completed'])
+        self.assertIsNone(job['completion_time_s'])
+        self.assertTrue(job['deadline_missed'], 'Terminal time 11 ms is already beyond the 10 ms deadline')
+        self.assertEqual(result['final_state_time_s'], .011)
+
 
 if __name__ == '__main__':
     unittest.main()
