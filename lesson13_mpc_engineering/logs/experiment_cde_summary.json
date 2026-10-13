@@ -1,0 +1,756 @@
+{
+  "config": {
+    "nominal_model": {
+      "inertia": 0.019762,
+      "damping": 0.080257
+    },
+    "plant": {
+      "dt_s": 0.001,
+      "coulomb_friction": 0.12,
+      "friction_smoothing": 0.02,
+      "integration": "semi_implicit"
+    },
+    "actuator": {
+      "torque_limit_nm": 2.0,
+      "slew_rate_nm_s": 50.0,
+      "delay_s": 0.002,
+      "time_constant_s": 0.005
+    },
+    "demo": {
+      "duration_s": 0.5,
+      "control_dt_s": 0.01
+    },
+    "mpc": {
+      "dt_s": 0.01,
+      "horizon_steps": 20
+    },
+    "experiment_ab": {
+      "duration_s": 4.0,
+      "target_deg": 30.0,
+      "seed": 2026,
+      "input_rate_weights": [
+        0.0,
+        0.5,
+        5.0
+      ]
+    },
+    "constraints": {
+      "position_limit_deg": 60.0,
+      "velocity_limit_rad_s": 1.5
+    },
+    "experiment_cde": {
+      "duration_s": 4.0,
+      "target_deg": 30.0,
+      "initial_velocity_rad_s": 2.0,
+      "seed": 2026,
+      "slack_weights": [
+        100.0,
+        10000.0,
+        1000000.0
+      ]
+    },
+    "measurement": {
+      "position_noise_std_deg": 0.05
+    },
+    "process_noise": {
+      "disturbance_torque_std_nm": 0.15
+    },
+    "initial_uncertainty": {
+      "position_std_deg": 5.0,
+      "velocity_std_rad_s": 1.0
+    },
+    "design_limits": {
+      "max_position_error_deg": 5.0,
+      "max_velocity_error_rad_s": 1.5,
+      "max_torque_nm": 3.0
+    }
+  },
+  "diagnostic": {
+    "kind": "Pure QP diagnostic; no physical trajectory for C",
+    "x0": [
+      0.0,
+      2.0
+    ],
+    "x_ref": [
+      0.5235987755982988,
+      0.0
+    ],
+    "u_prev": 0.0,
+    "velocity_limit_rad_s": 1.5,
+    "known_current_conflict_rad_s": 0.5,
+    "velocity_indices": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20
+    ],
+    "hard": {
+      "status": "infeasible",
+      "u0": null,
+      "X": null,
+      "U": null,
+      "objective": null,
+      "solve_time_s": 0.0016472000000000001,
+      "iterations": null,
+      "error": "OSQP did not solve the MPC problem: infeasible",
+      "DU": null,
+      "EPS": null,
+      "max_hard_violation": null,
+      "max_soft_violation": null,
+      "objective_scale": 1.0
+    },
+    "soft": {
+      "status": "optimal",
+      "u0": [
+        -0.5
+      ],
+      "X": [
+        [
+          9.591208707079424e-22,
+          0.018351223305178375,
+          0.034212726315325646,
+          0.0492220142101498,
+          0.06423046333255547,
+          0.07923847514299674,
+          0.09424590365837171,
+          0.10925276837352937,
+          0.12425908902558516,
+          0.13926488531887382,
+          0.15427017695696782,
+          0.16927498364278323,
+          0.18427932507859923,
+          0.19928322096608422,
+          0.21428669100632158,
+          0.22928975489983547,
+          0.24429243234662568,
+          0.25929474304610844,
+          0.2742967066515936,
+          0.289298343012542,
+          0.3042999067983268
+        ],
+        [
+          2.0,
+          1.6724615864384322,
+          1.500999546800623,
+          1.5008589835586368,
+          1.5008310301237575,
+          1.5007717333116473,
+          1.5007143581042206,
+          1.5006589598870455,
+          1.5006055321467762,
+          1.5005540747971415,
+          1.5005045877718166,
+          1.5004570710058267,
+          1.5004115244367784,
+          1.5003679480048662,
+          1.5003263416528714,
+          1.5002867053261666,
+          1.500249038974457,
+          1.5002133425314788,
+          1.5001796069032571,
+          1.5001478800279962,
+          1.5001647628584764
+        ]
+      ],
+      "U": [
+        [
+          -0.5,
+          -0.21154361802369967,
+          0.12018226077867725,
+          0.12039806854368289,
+          0.12033261802696602,
+          0.12033173415092834,
+          0.12033111618765967,
+          0.12033064375688377,
+          0.1203303292966986,
+          0.12033017284040383,
+          0.12033017438539922,
+          0.12033033393167539,
+          0.12033065147944369,
+          0.12033112702912097,
+          0.1203317605813404,
+          0.12033255214045528,
+          0.12033350167022573,
+          0.12033459096005075,
+          0.12033593429117244,
+          0.12043141432516839
+        ]
+      ],
+      "objective": 3254.766442263385,
+      "solve_time_s": 0.0051401,
+      "iterations": 625,
+      "error": null,
+      "DU": [
+        [
+          -0.5,
+          0.2884563819763003,
+          0.3317258788023769,
+          0.00021580776500564058,
+          -6.54505167168723e-05,
+          -8.838760376800314e-07,
+          -6.179632686675873e-07,
+          -4.7243077590242155e-07,
+          -3.1446018516900764e-07,
+          -1.5645629476701561e-07,
+          1.5449953955082307e-09,
+          1.5954627616276973e-07,
+          3.1754776830261733e-07,
+          4.755496772756995e-07,
+          6.335522194367282e-07,
+          7.91559114879381e-07,
+          9.495297704498196e-07,
+          1.0892898250208782e-06,
+          1.3433311216864974e-06,
+          9.548003399595384e-05
+        ]
+      ],
+      "EPS": [
+        [
+          0.5,
+          0.17246158643843224,
+          0.0009995468006230165,
+          0.0008589835586367445,
+          0.0008310301237575636,
+          0.0007717333116470616,
+          0.0007143581042207236,
+          0.000658959887045466,
+          0.000605532146776286,
+          0.0005540747971414652,
+          0.000504587771816751,
+          0.00045707100582665033,
+          0.00041152443677834626,
+          0.0003679480048662524,
+          0.00032634165287136413,
+          0.00028670532616657617,
+          0.00024903897445706765,
+          0.00021334253147873745,
+          0.0001796069032570736,
+          0.00014788002799612067,
+          0.00016476285847636158
+        ]
+      ],
+      "max_hard_violation": 1.6653345369377348e-16,
+      "max_soft_violation": 1.986258379993444e-16,
+      "objective_scale": 10000.0
+    }
+  },
+  "velocity_limit_rad_s": 1.5,
+  "versions": {
+    "python": "3.11.15",
+    "numpy": "2.4.6",
+    "cvxpy": "1.9.3",
+    "osqp": "1.1.3"
+  },
+  "scope": "C/D/E only; C has no physical trajectory. No fallback, deadline or hardware-safety guarantee.",
+  "cases": {
+    "d_soft": {
+      "rho": 10000.0,
+      "S": 0.5,
+      "velocity_mode": "soft",
+      "include_current_velocity": true,
+      "effective_config": {
+        "nominal_model": {
+          "inertia": 0.019762,
+          "damping": 0.080257
+        },
+        "plant": {
+          "dt_s": 0.001,
+          "coulomb_friction": 0.12,
+          "friction_smoothing": 0.02,
+          "integration": "semi_implicit"
+        },
+        "actuator": {
+          "torque_limit_nm": 2.0,
+          "slew_rate_nm_s": 50.0,
+          "delay_s": 0.002,
+          "time_constant_s": 0.005
+        },
+        "demo": {
+          "duration_s": 0.5,
+          "control_dt_s": 0.01
+        },
+        "mpc": {
+          "dt_s": 0.01,
+          "horizon_steps": 20
+        },
+        "experiment_ab": {
+          "duration_s": 4.0,
+          "target_deg": 30.0,
+          "seed": 2026,
+          "input_rate_weights": [
+            0.0,
+            0.5,
+            5.0
+          ]
+        },
+        "constraints": {
+          "position_limit_deg": 60.0,
+          "velocity_limit_rad_s": 1.5
+        },
+        "experiment_cde": {
+          "duration_s": 4.0,
+          "target_deg": 30.0,
+          "initial_velocity_rad_s": 2.0,
+          "seed": 2026,
+          "slack_weights": [
+            100.0,
+            10000.0,
+            1000000.0
+          ]
+        },
+        "measurement": {
+          "position_noise_std_deg": 0.05
+        },
+        "process_noise": {
+          "disturbance_torque_std_nm": 0.15
+        },
+        "initial_uncertainty": {
+          "position_std_deg": 5.0,
+          "velocity_std_rad_s": 1.0
+        },
+        "design_limits": {
+          "max_position_error_deg": 5.0,
+          "max_velocity_error_rad_s": 1.5,
+          "max_torque_nm": 3.0
+        },
+        "initial_condition": {
+          "q_true_deg": 0.0,
+          "dq_true_rad_s": 2.0
+        },
+        "initial_estimate": {
+          "position_deg": 0.0,
+          "velocity_rad_s": 2.0
+        }
+      },
+      "status": "complete",
+      "failure_reason": null,
+      "expected_samples": 4000,
+      "final_state": {
+        "time_s": 4.0,
+        "position_rad": 0.5232787625371884,
+        "velocity_rad_s": -0.0006626594177979126
+      },
+      "csv": "logs/experiment_d_soft.csv",
+      "plans": "logs/experiment_d_soft_plans.npz",
+      "metrics": {
+        "tracking_rmse_rad": 0.09407419394927391,
+        "rms_actual_torque_nm": 0.08900296014132525,
+        "peak_actual_torque_nm": 0.6260614129209763,
+        "rms_request_delta_nm": 0.055393395504898135,
+        "max_request_delta_nm": 0.5291828315864134,
+        "max_command_delta_nm": 0.5,
+        "max_qp_first_delta_nm": 0.5000000135658422,
+        "max_planned_delta_nm": 0.5000000135658422,
+        "control_dt_s": 0.01,
+        "logged_samples": 4000,
+        "physical_dt_s": 0.0009999999999998899,
+        "max_actual_slew_nm_s": 50.00000000000555,
+        "solver_call_count": 400,
+        "solver_success_count": 400,
+        "solver_failure_count": 0,
+        "guard_modified_count": 1,
+        "mean_solver_wall_ms": 7.083291999999375,
+        "p95_solver_wall_ms": 8.966935000020724,
+        "p99_solver_wall_ms": 20.669236000019847,
+        "max_solver_wall_ms": 114.96329999999944,
+        "mean_solver_internal_ms": 0.61170125,
+        "p95_solver_internal_ms": 1.7916699999999992,
+        "p99_solver_internal_ms": 7.80335099999999,
+        "max_solver_internal_ms": 12.9149,
+        "mean_solver_iterations": 84.8125,
+        "max_actual_velocity_violation_rad_s": 0.5,
+        "actual_overspeed_duration_s": 0.018000000000000002,
+        "actual_overspeed_integral_rad": 0.0053717270856479815,
+        "max_predicted_slack_rad_s": 0.5,
+        "max_initial_slack_rad_s": 0.5,
+        "initial_slack_hold_integral_rad": 0.009143668046275298
+      }
+    },
+    "e_rho100": {
+      "rho": 100.0,
+      "S": 0.5,
+      "velocity_mode": "soft",
+      "include_current_velocity": true,
+      "effective_config": {
+        "nominal_model": {
+          "inertia": 0.019762,
+          "damping": 0.080257
+        },
+        "plant": {
+          "dt_s": 0.001,
+          "coulomb_friction": 0.12,
+          "friction_smoothing": 0.02,
+          "integration": "semi_implicit"
+        },
+        "actuator": {
+          "torque_limit_nm": 2.0,
+          "slew_rate_nm_s": 50.0,
+          "delay_s": 0.002,
+          "time_constant_s": 0.005
+        },
+        "demo": {
+          "duration_s": 0.5,
+          "control_dt_s": 0.01
+        },
+        "mpc": {
+          "dt_s": 0.01,
+          "horizon_steps": 20
+        },
+        "experiment_ab": {
+          "duration_s": 4.0,
+          "target_deg": 30.0,
+          "seed": 2026,
+          "input_rate_weights": [
+            0.0,
+            0.5,
+            5.0
+          ]
+        },
+        "constraints": {
+          "position_limit_deg": 60.0,
+          "velocity_limit_rad_s": 1.5
+        },
+        "experiment_cde": {
+          "duration_s": 4.0,
+          "target_deg": 30.0,
+          "initial_velocity_rad_s": 2.0,
+          "seed": 2026,
+          "slack_weights": [
+            100.0,
+            10000.0,
+            1000000.0
+          ]
+        },
+        "measurement": {
+          "position_noise_std_deg": 0.05
+        },
+        "process_noise": {
+          "disturbance_torque_std_nm": 0.15
+        },
+        "initial_uncertainty": {
+          "position_std_deg": 5.0,
+          "velocity_std_rad_s": 1.0
+        },
+        "design_limits": {
+          "max_position_error_deg": 5.0,
+          "max_velocity_error_rad_s": 1.5,
+          "max_torque_nm": 3.0
+        },
+        "initial_condition": {
+          "q_true_deg": 0.0,
+          "dq_true_rad_s": 2.0
+        },
+        "initial_estimate": {
+          "position_deg": 0.0,
+          "velocity_rad_s": 2.0
+        }
+      },
+      "status": "complete",
+      "failure_reason": null,
+      "expected_samples": 4000,
+      "final_state": {
+        "time_s": 4.0,
+        "position_rad": 0.523282601797819,
+        "velocity_rad_s": -0.0006668101856406567
+      },
+      "csv": "logs/experiment_e_rho100.csv",
+      "plans": "logs/experiment_e_rho100_plans.npz",
+      "metrics": {
+        "tracking_rmse_rad": 0.09182120890464002,
+        "rms_actual_torque_nm": 0.08216719942589976,
+        "peak_actual_torque_nm": 0.5563660507416649,
+        "rms_request_delta_nm": 0.050729642707134266,
+        "max_request_delta_nm": 0.5,
+        "max_command_delta_nm": 0.5,
+        "max_qp_first_delta_nm": 0.5000000978980406,
+        "max_planned_delta_nm": 0.5000000978980406,
+        "control_dt_s": 0.01,
+        "logged_samples": 4000,
+        "physical_dt_s": 0.0009999999999998899,
+        "max_actual_slew_nm_s": 50.00000000000555,
+        "solver_call_count": 400,
+        "solver_success_count": 400,
+        "solver_failure_count": 0,
+        "guard_modified_count": 0,
+        "mean_solver_wall_ms": 7.2168319999995845,
+        "p95_solver_wall_ms": 9.528939999998437,
+        "p99_solver_wall_ms": 13.957626999952025,
+        "max_solver_wall_ms": 106.21439999999893,
+        "mean_solver_internal_ms": 0.42869075,
+        "p95_solver_internal_ms": 0.8438149999999989,
+        "p99_solver_internal_ms": 1.5084259999999994,
+        "max_solver_internal_ms": 2.306,
+        "mean_solver_iterations": 63.8125,
+        "max_actual_velocity_violation_rad_s": 0.5,
+        "actual_overspeed_duration_s": 0.019,
+        "actual_overspeed_integral_rad": 0.005440669088907943,
+        "max_predicted_slack_rad_s": 0.5000000000000001,
+        "max_initial_slack_rad_s": 0.5000000000000001,
+        "initial_slack_hold_integral_rad": 0.010528072023090484
+      }
+    },
+    "e_rho10000": {
+      "rho": 10000.0,
+      "S": 0.5,
+      "velocity_mode": "soft",
+      "include_current_velocity": true,
+      "effective_config": {
+        "nominal_model": {
+          "inertia": 0.019762,
+          "damping": 0.080257
+        },
+        "plant": {
+          "dt_s": 0.001,
+          "coulomb_friction": 0.12,
+          "friction_smoothing": 0.02,
+          "integration": "semi_implicit"
+        },
+        "actuator": {
+          "torque_limit_nm": 2.0,
+          "slew_rate_nm_s": 50.0,
+          "delay_s": 0.002,
+          "time_constant_s": 0.005
+        },
+        "demo": {
+          "duration_s": 0.5,
+          "control_dt_s": 0.01
+        },
+        "mpc": {
+          "dt_s": 0.01,
+          "horizon_steps": 20
+        },
+        "experiment_ab": {
+          "duration_s": 4.0,
+          "target_deg": 30.0,
+          "seed": 2026,
+          "input_rate_weights": [
+            0.0,
+            0.5,
+            5.0
+          ]
+        },
+        "constraints": {
+          "position_limit_deg": 60.0,
+          "velocity_limit_rad_s": 1.5
+        },
+        "experiment_cde": {
+          "duration_s": 4.0,
+          "target_deg": 30.0,
+          "initial_velocity_rad_s": 2.0,
+          "seed": 2026,
+          "slack_weights": [
+            100.0,
+            10000.0,
+            1000000.0
+          ]
+        },
+        "measurement": {
+          "position_noise_std_deg": 0.05
+        },
+        "process_noise": {
+          "disturbance_torque_std_nm": 0.15
+        },
+        "initial_uncertainty": {
+          "position_std_deg": 5.0,
+          "velocity_std_rad_s": 1.0
+        },
+        "design_limits": {
+          "max_position_error_deg": 5.0,
+          "max_velocity_error_rad_s": 1.5,
+          "max_torque_nm": 3.0
+        },
+        "initial_condition": {
+          "q_true_deg": 0.0,
+          "dq_true_rad_s": 2.0
+        },
+        "initial_estimate": {
+          "position_deg": 0.0,
+          "velocity_rad_s": 2.0
+        }
+      },
+      "status": "complete",
+      "failure_reason": null,
+      "expected_samples": 4000,
+      "final_state": {
+        "time_s": 4.0,
+        "position_rad": 0.5232787625371884,
+        "velocity_rad_s": -0.0006626594177979126
+      },
+      "csv": "logs/experiment_e_rho10000.csv",
+      "plans": "logs/experiment_e_rho10000_plans.npz",
+      "metrics": {
+        "tracking_rmse_rad": 0.09407419394927391,
+        "rms_actual_torque_nm": 0.08900296014132525,
+        "peak_actual_torque_nm": 0.6260614129209763,
+        "rms_request_delta_nm": 0.055393395504898135,
+        "max_request_delta_nm": 0.5291828315864134,
+        "max_command_delta_nm": 0.5,
+        "max_qp_first_delta_nm": 0.5000000135658422,
+        "max_planned_delta_nm": 0.5000000135658422,
+        "control_dt_s": 0.01,
+        "logged_samples": 4000,
+        "physical_dt_s": 0.0009999999999998899,
+        "max_actual_slew_nm_s": 50.00000000000555,
+        "solver_call_count": 400,
+        "solver_success_count": 400,
+        "solver_failure_count": 0,
+        "guard_modified_count": 1,
+        "mean_solver_wall_ms": 7.363942999999722,
+        "p95_solver_wall_ms": 9.16655500000445,
+        "p99_solver_wall_ms": 12.216746000010517,
+        "max_solver_wall_ms": 150.1284999999939,
+        "mean_solver_internal_ms": 0.57112425,
+        "p95_solver_internal_ms": 1.832064999999998,
+        "p99_solver_internal_ms": 5.478604,
+        "max_solver_internal_ms": 6.716900000000001,
+        "mean_solver_iterations": 84.8125,
+        "max_actual_velocity_violation_rad_s": 0.5,
+        "actual_overspeed_duration_s": 0.018000000000000002,
+        "actual_overspeed_integral_rad": 0.0053717270856479815,
+        "max_predicted_slack_rad_s": 0.5,
+        "max_initial_slack_rad_s": 0.5,
+        "initial_slack_hold_integral_rad": 0.009143668046275298
+      }
+    },
+    "e_rho1e6": {
+      "rho": 1000000.0,
+      "S": 0.5,
+      "velocity_mode": "soft",
+      "include_current_velocity": true,
+      "effective_config": {
+        "nominal_model": {
+          "inertia": 0.019762,
+          "damping": 0.080257
+        },
+        "plant": {
+          "dt_s": 0.001,
+          "coulomb_friction": 0.12,
+          "friction_smoothing": 0.02,
+          "integration": "semi_implicit"
+        },
+        "actuator": {
+          "torque_limit_nm": 2.0,
+          "slew_rate_nm_s": 50.0,
+          "delay_s": 0.002,
+          "time_constant_s": 0.005
+        },
+        "demo": {
+          "duration_s": 0.5,
+          "control_dt_s": 0.01
+        },
+        "mpc": {
+          "dt_s": 0.01,
+          "horizon_steps": 20
+        },
+        "experiment_ab": {
+          "duration_s": 4.0,
+          "target_deg": 30.0,
+          "seed": 2026,
+          "input_rate_weights": [
+            0.0,
+            0.5,
+            5.0
+          ]
+        },
+        "constraints": {
+          "position_limit_deg": 60.0,
+          "velocity_limit_rad_s": 1.5
+        },
+        "experiment_cde": {
+          "duration_s": 4.0,
+          "target_deg": 30.0,
+          "initial_velocity_rad_s": 2.0,
+          "seed": 2026,
+          "slack_weights": [
+            100.0,
+            10000.0,
+            1000000.0
+          ]
+        },
+        "measurement": {
+          "position_noise_std_deg": 0.05
+        },
+        "process_noise": {
+          "disturbance_torque_std_nm": 0.15
+        },
+        "initial_uncertainty": {
+          "position_std_deg": 5.0,
+          "velocity_std_rad_s": 1.0
+        },
+        "design_limits": {
+          "max_position_error_deg": 5.0,
+          "max_velocity_error_rad_s": 1.5,
+          "max_torque_nm": 3.0
+        },
+        "initial_condition": {
+          "q_true_deg": 0.0,
+          "dq_true_rad_s": 2.0
+        },
+        "initial_estimate": {
+          "position_deg": 0.0,
+          "velocity_rad_s": 2.0
+        }
+      },
+      "status": "complete",
+      "failure_reason": null,
+      "expected_samples": 4000,
+      "final_state": {
+        "time_s": 4.0,
+        "position_rad": 0.5232786751253391,
+        "velocity_rad_s": -0.0006625630772457916
+      },
+      "csv": "logs/experiment_e_rho1e6.csv",
+      "plans": "logs/experiment_e_rho1e6_plans.npz",
+      "metrics": {
+        "tracking_rmse_rad": 0.09413173400020343,
+        "rms_actual_torque_nm": 0.08930145367060206,
+        "peak_actual_torque_nm": 0.6206108395942169,
+        "rms_request_delta_nm": 0.055542782597909575,
+        "max_request_delta_nm": 0.5303589745350584,
+        "max_command_delta_nm": 0.5,
+        "max_qp_first_delta_nm": 0.5000000000138851,
+        "max_planned_delta_nm": 0.5000000156595268,
+        "control_dt_s": 0.01,
+        "logged_samples": 4000,
+        "physical_dt_s": 0.0009999999999998899,
+        "max_actual_slew_nm_s": 50.00000000000555,
+        "solver_call_count": 400,
+        "solver_success_count": 400,
+        "solver_failure_count": 0,
+        "guard_modified_count": 1,
+        "mean_solver_wall_ms": 7.532653750001117,
+        "p95_solver_wall_ms": 9.069555000024815,
+        "p99_solver_wall_ms": 26.985679999987152,
+        "max_solver_wall_ms": 139.99809999995705,
+        "mean_solver_internal_ms": 0.87371425,
+        "p95_solver_internal_ms": 2.3935249999999972,
+        "p99_solver_internal_ms": 18.966848999999996,
+        "max_solver_internal_ms": 46.425799999999995,
+        "mean_solver_iterations": 136.4375,
+        "max_actual_velocity_violation_rad_s": 0.5,
+        "actual_overspeed_duration_s": 0.018000000000000002,
+        "actual_overspeed_integral_rad": 0.005370167960578719,
+        "max_predicted_slack_rad_s": 0.4999999999999999,
+        "max_initial_slack_rad_s": 0.4999999999999999,
+        "initial_slack_hold_integral_rad": 0.00917210606544205
+      }
+    }
+  }
+}

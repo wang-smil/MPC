@@ -164,11 +164,21 @@ def run_experiments(config: dict, output_dir: Path) -> dict:
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--experiment', choices=['ab'], default='ab')
+    parser.add_argument('--experiment', choices=['ab', 'cde'], default='ab')
     parser.add_argument('--config', type=Path)
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
-    summary = run_experiments(load_config(args.config or root / 'config/mpc_engineering.yaml'), root)
+    config = load_config(args.config or root / 'config/mpc_engineering.yaml')
+    if args.experiment == 'cde':
+        from .run_feasibility import run_feasibility_experiments
+        summary = run_feasibility_experiments(config, root)
+        print(f"C hard: {summary['diagnostic']['hard']['status']}; D static soft: {summary['diagnostic']['soft']['status']}")
+        for name, case in summary['cases'].items():
+            m = case['metrics']
+            print(f"{name}: {case['status']}, tracking_rmse={m['tracking_rmse_rad']}, actual_overspeed_integral={m['actual_overspeed_integral_rad']}, initial_slack_integral={m['initial_slack_hold_integral_rad']}")
+        print(f'report: {root / "reports/feasibility_report.md"}')
+        return
+    summary = run_experiments(config, root)
     for name, case in summary['cases'].items():
         m = case['metrics']
         print(f"{name}: {case['status']}, tracking_rmse={m['tracking_rmse_rad']}, request_delta_rms={m['rms_request_delta_nm']}, guard_changes={m['guard_modified_count']}")

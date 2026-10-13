@@ -25,6 +25,13 @@ experiment_ab:
   input_rate_weights: [0.0, 0.5, 5.0]
 constraints:
   position_limit_deg: 60.0
+  velocity_limit_rad_s: 1.5
+experiment_cde:
+  duration_s: 4.0
+  target_deg: 30.0
+  initial_velocity_rad_s: 2.0
+  seed: 2026
+  slack_weights: [100.0, 10000.0, 1000000.0]
 measurement:
   position_noise_std_deg: 0.05
 process_noise:

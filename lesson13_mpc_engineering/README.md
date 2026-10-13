@@ -1,6 +1,18 @@
 # 第13课：MPC工程化
 
-当前完成第一阶段非理想关节/执行器，以及第二阶段实验A/B：MPC变化量惩罚与硬变化量约束。软约束、不可行处理、计算预算和fallback尚未实现；不是第13课完整验收。
+当前覆盖非理想关节/执行器、A/B输入变化量，以及C/D/E可行性与速度松弛量。F/G计算预算、fallback和综合验收尚未实现；不是第13课完整验收。
+
+## 实验C/D/E
+
+```powershell
+conda run -n robot-control python -m lesson13_mpc_engineering.src.run_experiments --experiment cde
+```
+
+看 [可行性实验报告](reports/feasibility_report.md)。C在纯QP中令当前速度2 rad/s却要求≤1.5，预期不可行，不画虚假的闭环恢复线；D在相同索引上加非负EPS；E比较rho=100、10000、1000000。所有输入/变化量/位置仍是硬约束。
+
+本次交付的测试、独立审计与实现决定见 [验收记录](reports/phase3_verification.md)，以后修改代码或配置需重新验证。
+
+`run_feasibility.py`负责C/D/E分组和产物；`feasibility_metrics.py`区分真实超速积分与QP初始slack的控制事件持有积分。预测模型未包含执行器滞后和摩擦，所以软约束成功不代表实际速度已达标。全部状态、失败原因、终态和原始计划均保留。
 
 ## 实验A/B
 
@@ -64,4 +76,4 @@ CSV一行对应区间 `[t_k,t_k+1ms)`：q/dq是区间开始的状态，actual_to
 conda run -n robot-control python -m unittest discover -s lesson13_mpc_engineering/tests -t . -v
 ```
 
-后续完成C–G：软约束、不可行案例、计算预算、fallback及非理想综合验收。当前仿真不代表安全认证或硬实时保证。
+后续完成F/G：计算预算、fallback及非理想综合验收。当前仿真不代表安全认证或硬实时保证。
