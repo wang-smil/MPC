@@ -5,6 +5,7 @@ import numpy as np
 
 from lesson12_linear_mpc.src.mpc_controller import LinearMPCController
 from ._validation import bounded_scalar, finite_scalar
+from .qp_solver import SolverSettings, solve_qp
 
 
 def finite_vector(value, length: int, name: str) -> np.ndarray:
@@ -27,7 +28,10 @@ class EngineeringMPCController(LinearMPCController):
     def __init__(self, Ad, Bd, Q, R, P_terminal, horizon, *, input_rate_weight=0.,
                  torque_bounds=(-2., 2.), delta_bounds=None, position_bounds=None,
                  velocity_mode='off', velocity_bounds=None, include_current_velocity=False,
-                 slack_weight=1e4):
+                 slack_weight=1e4, solver_settings=None):
+        if solver_settings is not None and not isinstance(solver_settings, SolverSettings):
+            raise ValueError('solver_settings must be SolverSettings or None.')
+        self.solver_settings = solver_settings
         self.input_rate_weight = bounded_scalar(input_rate_weight, 'input_rate_weight')
         self.delta_bounds = finite_bounds(delta_bounds, 'delta_bounds')
         self.position_bounds = finite_bounds(position_bounds, 'position_bounds')
@@ -78,12 +82,19 @@ class EngineeringMPCController(LinearMPCController):
         self.objective_scale = max(1., self.slack_weight) if velocity_mode == 'soft' else 1.
         self.problem = cp.Problem(cp.Minimize(cost / self.objective_scale), constraints)
 
-    def solve(self, x_hat, x_ref, u_prev: float) -> dict:
+    def solve(self, x_hat, x_ref, u_prev: float, *, solver_settings=None) -> dict:
         state = finite_vector(x_hat, 2, 'x_hat')
         reference = finite_vector(x_ref, 2, 'x_ref')
         previous = finite_scalar(u_prev, 'u_prev')
         self.u_prev.value = np.array([previous])
-        result = super().solve(state, reference)
+        settings = solver_settings if solver_settings is not None else self.solver_settings
+        if settings is None:
+            result = super().solve(state, reference)  # Preserve A-E's original invocation path.
+        else:
+            if not isinstance(settings, SolverSettings):
+                raise ValueError('solver_settings must be SolverSettings or None.')
+            self.x0.value, self.x_ref.value = state, reference
+            result = solve_qp(self.problem, self.X, self.U, settings)
         result.update(DU=None, EPS=None, max_hard_violation=None, max_soft_violation=None)
         if result['u0'] is None:
             return result
